@@ -1,5 +1,5 @@
 # **unity3D ml-agents spacecraft docking** 
-[![unity3d ml-agents](https://unity3d.com/machine-learning)
+[unity3d ml-agents](https://unity3d.com/machine-learning)
 
 
 Overview

@@ -16,12 +16,14 @@ public class SpacecraftAgent : Agent
     private float orientTolerance = 0.0055f * 5;  // 1 degree = 0.0055
     private float velocityTorlerance = 0.5f;
     private float angularVelocityTolerence = 0.08f;
-    public float maxVelocity = 3f;
-    public float orientateSpeed = 0.1f;
+    private float orientateSpeed = 0.5f;
+    private float movementSpeed = 2.0f;
+    private float maxVelocity = 10.0f;
+    private float maxAngularVelocity = 5.0f;
 
     private bool isTrigger = false;
     const float degree2Rad = 0.0174533f; // pi/180
-    static private float initPosRange = 10f;
+    static private float initPosRange = 20f;
     static private float rLimit = Mathf.Sqrt(Mathf.Pow(3 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
     private float previousR = rLimit;
@@ -59,47 +61,75 @@ public class SpacecraftAgent : Agent
     /*
      * 0: Up    Arrow: positive z 
      * 1: Down  Arrow: negative z 
-     * 4: Q     Key:   positive rotation y
-     * 5: W     Key:   negative rotation y
+     * 2: Q     Key:   positive rotation y
+     * 3: W     Key:   negative rotation y
      * 
      */
     public override void AgentAction(float[] vectorAction, string textAction)
     {
-        float r = Vector3.Distance(spacecraft.transform.position, targetPosition); ; // distance from spacecraft to target position (space station + offset);
-        if (brain.brainParameters.vectorActionSpaceType == SpaceType.continuous)
+        float r = Vector3.Distance(spacecraft.transform.position, targetPosition);// distance from spacecraft to target position (space station + offset);
+        int action = (int)vectorAction[0];
+
+        // forward and backward
+        if(action == 0 || action == 1)
         {
-           
-            FixedUpdate(); // transformation: orientation + translation
-
-            //-------------------------------------------------Reward fucntion ----------------------------------------------------------
-            /* 
-            * When spaceship distance is closer to the station -> reward!
-            * The reward is propotional to the distance (the closer the higher)
-            */
-            float rewardPosition = (rLimit - r) * 0.01f; //TBD
-            if (r < previousR)
-                AddReward(rewardPosition);
-            if (r > previousR)
-                AddReward(-rewardPosition);
-
-            // Failure: over the rLmint or hit space garbage
-            if (r >= rLimit || isTrigger == true)
+            if(action ==0)
             {
-                Done();
-                SetReward(-1.0f);
-                failureCount++;
-                return;
+                ThrustForward(movementSpeed);
+                ClampVelocity();
             }
-
-            // Success
-            if (IsDock(r, spacecraft.transform.rotation, targetOrientation, rbSpacecraft))
+            else
             {
-                Done();
-                SetReward(1.0f);
-                successCount++;
-                return;
+                ThrustForward(-movementSpeed);
+                ClampVelocity();
+            }
+            
+        }
+
+        // rotation
+        if (action == 2 || action == 3)
+        {
+            if (action == 3)
+            {
+                Orientation(rbSpacecraft, 1.0f * orientateSpeed);
+                ClampAngularVelocity();
+            }
+            else
+            {
+                Orientation(rbSpacecraft,- 1.0f * orientateSpeed);
+                ClampAngularVelocity();
             }
         }
+
+        //-------------------------------------------------Reward fucntion ----------------------------------------------------------
+        /* 
+        * When spaceship distance is closer to the station -> reward!
+        * The reward is propotional to the distance (the closer the higher)
+        */
+        float rewardPosition = (rLimit - r) * 0.1f; //TBD
+        if (r < previousR)
+            AddReward(rewardPosition);
+        if (r > previousR)
+            AddReward(-rewardPosition);
+
+        // Failure: over the rLmint or hit space garbage
+        if (r >= rLimit || isTrigger == true)
+        {
+            Done();
+            SetReward(-1.0f);
+            failureCount++;
+            return;
+        }
+
+        // Success
+        if (IsDock(r, spacecraft.transform.rotation, targetOrientation, rbSpacecraft))
+        {
+            Done();
+            SetReward(1.0f);
+            successCount++;
+            return;
+        }
+        
         //-------------------------------------------------Reward fucntion ----------------------------------------------------------
 
         // Tracing
@@ -116,18 +146,6 @@ public class SpacecraftAgent : Agent
         }
 
         previousR = r;
-    }
-
-    public void FixedUpdate()
-    {
-        if (rbSpacecraft != null)
-        {
-            float xAxis = Input.GetAxis("Horizontal");
-            float zAxis = Input.GetAxis("Vertical");
-
-            ThrustForward(zAxis);
-            Orientation(rbSpacecraft, xAxis * orientateSpeed);
-        }
     }
 
     // Trigger Event
@@ -163,6 +181,13 @@ public class SpacecraftAgent : Agent
         float z = Mathf.Clamp(rbSpacecraft.velocity.z, -maxVelocity, maxVelocity);
 
         rbSpacecraft.velocity = new Vector3(x, 0, z);
+    }
+
+    private void ClampAngularVelocity()
+    {
+        float y = Mathf.Clamp(rbSpacecraft.angularVelocity.y, -maxAngularVelocity, maxAngularVelocity);
+
+        rbSpacecraft.angularVelocity = new Vector3(0, y, 0);
     }
 
     private void ThrustForward(float amount)
