@@ -5,7 +5,7 @@
 Overview
 ---
 Implementing a spacecraft docking scenario via ml-agents library provided by unity3D.
-The spacecraft (agent) is trained with Proximal Policy Optimization (PPO), a reinforcement learning algorithm.
+The spacecraft (agent) is trained with [Proximal Policy Optimization (PPO)](https://blog.openai.com/openai-baselines-ppo/), a reinforcement learning algorithm.
 The goal of this project is to let spacecraft (agent) dock to the space station successfully under the physical constrains (rigid body).
 
 Challenge
