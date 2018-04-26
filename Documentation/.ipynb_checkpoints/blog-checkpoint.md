@@ -40,6 +40,6 @@ The goals / steps of this project are the following:
 * another reward function: maybe add a reward that after certain distance to the target point, the algorithm starts to adjust the reward function
 
 <br>
-**Training image:** 
+**Training image:** <br>
 ![alt text][spacecraft_0]
 
