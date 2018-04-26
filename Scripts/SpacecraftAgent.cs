@@ -19,7 +19,10 @@ public class SpacecraftAgent : Agent
     private float orientateSpeed = 0.5f;
     private float movementSpeed = 2.0f;
     private float maxVelocity = 10.0f;
-    private float maxAngularVelocity = 5.0f;
+    private float maxAngularVelocity = 3.0f;
+    private float firstStageDistance = 10.0f;
+    private float secondStageDistnace = 5.0f;
+    private float scale = 0.01f;
 
     private bool isTrigger = false;
     const float degree2Rad = 0.0174533f; // pi/180
@@ -27,15 +30,20 @@ public class SpacecraftAgent : Agent
     static private float rLimit = Mathf.Sqrt(Mathf.Pow(3 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
     private float previousR = rLimit;
-    private float previousAngleDiff = 359 * degree2Rad;
+    private float previousOrientationDiff = 1;
 
     // Tracing
     [SerializeField]
     private UnityEngine.UI.Text text;
+    [SerializeField]
+    private UnityEngine.UI.Text text_stage;
     private float successCount = 0;
     private float failureCount = 0;
     private int stepsCount = 0;
     private int collisionCount = 0;
+    private bool initialStage = false;
+    private bool firstStage = false;
+    private bool secondStage = false;
 
 
     public override void InitializeAgent()
@@ -68,12 +76,14 @@ public class SpacecraftAgent : Agent
     public override void AgentAction(float[] vectorAction, string textAction)
     {
         float r = Vector3.Distance(spacecraft.transform.position, targetPosition);// distance from spacecraft to target position (space station + offset);
+        float orientationDiff = Mathf.Abs(spacecraft.transform.rotation.y - spaceStation.transform.rotation.y);
         int action = (int)vectorAction[0];
 
         // forward and backward
         if(action == 0 || action == 1)
         {
-            if(action ==0)
+            stepsCount++;
+            if (action ==0)
             {
                 ThrustForward(movementSpeed);
                 ClampVelocity();
@@ -89,6 +99,7 @@ public class SpacecraftAgent : Agent
         // rotation
         if (action == 2 || action == 3)
         {
+            stepsCount++;
             if (action == 3)
             {
                 Orientation(rbSpacecraft, 1.0f * orientateSpeed);
@@ -106,14 +117,56 @@ public class SpacecraftAgent : Agent
         * When spaceship distance is closer to the station -> reward!
         * The reward is propotional to the distance (the closer the higher)
         */
-        float rewardPosition = (rLimit - r) * 0.1f; //TBD
-        if (r < previousR)
-            AddReward(rewardPosition);
-        if (r > previousR)
-            AddReward(-rewardPosition);
+
+        // TODO: Need to Refactor! The nested condisiton is ugly.
+        if (r > firstStageDistance)
+        {
+            // [Initial stage]: start to approach the station
+            initialStage = true;
+            firstStage = false;
+            secondStage = false;
+            float initialScale = 0.01f;
+            PositionReward(r, initialScale);
+        }
+        else
+        {     
+            // [Second stage]: start to deaccelerate
+            // TODO: De-acceleration and make sure the angle is correct
+            if(r < secondStageDistnace)
+            {
+                initialStage = false;
+                firstStage = false;
+                secondStage = true;
+                float secondStageScale = 0.1f;
+                float secondStageOrientationScale = 2.0f;
+                PositionReward(r, secondStageScale);
+                OrientationReward(orientationDiff, secondStageOrientationScale);
+
+            }
+            else
+            {
+                // [First stage]: start to adjust the orientation
+                // TODO: Align the spacecraft orientation to the space station orientation
+                initialStage = false;
+                firstStage = true;
+                secondStage = false;
+                float firstStagePositionScale = 0.05f;
+                float firstStageOrientationScale = 1.0f;
+                PositionReward(r, firstStagePositionScale);
+                OrientationReward(orientationDiff, firstStageOrientationScale);
+            }
+        }
+
+        /*
+         * Punish for too many steps (above 200 steps)
+         */
+        if (stepsCount > 1000) //TBD
+        {
+            AddReward(-stepsCount * 0.01f); //TBD, The punish is propotional to the steps
+        }
 
         // Failure: over the rLmint or hit space garbage
-        if (r >= rLimit || isTrigger == true)
+        if (r >= rLimit || isTrigger == true || stepsCount > 3000)
         {
             Done();
             SetReward(-1.0f);
@@ -145,7 +198,14 @@ public class SpacecraftAgent : Agent
                 , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount, collisionCount);
         }
 
+        if (text_stage != null)
+        {
+            text_stage.text = string.Format("[Stage]: Initial: {0}, First: {1}, Second: {2}",initialStage, firstStage, secondStage);
+        }
+
+        // Update the position and orientation.
         previousR = r;
+        previousOrientationDiff = orientationDiff;
     }
 
     // Trigger Event
@@ -161,13 +221,16 @@ public class SpacecraftAgent : Agent
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));    
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
         spaceGargabe.transform.position = spaceStation.transform.position + new Vector3(6f, 0f, 8f); //related posisiton to 
-        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
+        spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
         targetPosition = spaceStation.transform.position + new Vector3(0, 0, -6); // (0, 0, -6) is the offset from space staion
         targetOrientation = spaceStation.transform.rotation;
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
         rbSpacecraft.angularVelocity = new Vector3(0f, 0f, 0f);
 
+        initialStage = false;
+        firstStage = false;
+        secondStage = false;
         isTrigger = false;
         SetReward(0);
         stepsCount = 0;
@@ -200,6 +263,33 @@ public class SpacecraftAgent : Agent
     {
         t.AddTorque(0, amount, 0);
 
+    }
+
+    // Reward functions
+    private void PositionReward(float r, float rewardScale)
+    {
+        float rewardPosition = (rLimit - r) * rewardScale;
+
+        //Exclude qual 
+        if (r < previousR)
+            AddReward(rewardPosition);
+        if (r > previousR)
+            AddReward(-rewardPosition);   
+    }
+
+    // Based on the tracing information (spacecraft.transform.rotation.y)
+    // -1 < Orientation.y < 1. Documentation: https://docs.unity3d.com/ScriptReference/Quaternion-y.html
+    private void OrientationReward(float orientationDiff, float rewardScale)
+    {
+        // If diff = 0, reward, if diff = 1, punish ----> cosine function
+        // If 1 Quaternion = 180 degree and 2pi radian = 180 degree  --> 1 Quaternion = 2 pi radian
+        float rewardOrientation = Mathf.Cos(orientationDiff/ 2*Mathf.PI) * rewardScale; //TBD
+        rewardOrientation = Mathf.Abs(rewardOrientation); // Make it positive
+
+        if (orientationDiff < previousOrientationDiff)
+            AddReward(rewardOrientation);
+        if(orientationDiff > previousOrientationDiff)
+            AddReward(-rewardOrientation);
     }
 
     /*
