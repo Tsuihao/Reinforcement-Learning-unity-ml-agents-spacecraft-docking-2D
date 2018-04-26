@@ -10,7 +10,7 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[spacecraft_0]: ./Tensorboard_img/spacecraft_0.png 
+[spacecraft_0]: ./Tensorboard/Spacecraft_0/spacecraft_0.png 
 
 ## Template
 **Date:**<br>
@@ -18,6 +18,7 @@ The goals / steps of this project are the following:
 **Observation:**<br>
 **Improved points:**<br> 
 **Need improvements:**<br>
+**Training image:** <br>
 
 
 ---
@@ -39,10 +40,6 @@ The goals / steps of this project are the following:
 * another reward function: maybe add a reward that after certain distance to the target point, the algorithm starts to adjust the reward function
 
 <br>
-
-
-
-
-                  |
+**Training image:** 
 ![alt text][spacecraft_0]
 
