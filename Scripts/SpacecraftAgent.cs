@@ -17,6 +17,7 @@ public class SpacecraftAgent : Agent
     private float velocityTorlerance = 0.5f;
     private float angularVelocityTolerence = 0.08f;
     private float orientateSpeed = 0.5f;
+    private int orientationAngle = 2;
     private float movementSpeed = 2.0f;
     private float maxVelocity = 10.0f;
     private float maxAngularVelocity = 3.0f;
@@ -25,12 +26,13 @@ public class SpacecraftAgent : Agent
     private float scale = 0.01f;
 
     private bool isTrigger = false;
-    const float degree2Rad = 0.0174533f; // pi/180
+    private bool isMove = false;
     static private float initPosRange = 20f;
     static private float rLimit = Mathf.Sqrt(Mathf.Pow(3 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
-    private float previousR = rLimit;
-    private float previousOrientationDiff = 1;
+    private float previousR = rLimit; // maximum value
+    private float previousOrientationDiff = 1; // maximum value
+    private float previousPositonOrientationDiff = 180; // maximum vale
 
     // Tracing
     [SerializeField]
@@ -44,6 +46,10 @@ public class SpacecraftAgent : Agent
     private bool initialStage = false;
     private bool firstStage = false;
     private bool secondStage = false;
+    private float positionReward = 0;
+    private float orientationReward = 0;
+    private float positionOrientationReward = 0;
+
 
 
     public override void InitializeAgent()
@@ -76,12 +82,29 @@ public class SpacecraftAgent : Agent
     public override void AgentAction(float[] vectorAction, string textAction)
     {
         float r = Vector3.Distance(spacecraft.transform.position, targetPosition);// distance from spacecraft to target position (space station + offset);
+
+        /*
+         * To distinguish the naming:
+         * orientationDiff: the "spacecraft" self orientation and "space station" self orientation difference -> Use for adjust the final spacecraft orientation 
+         * positionOrientation: The angle between "spacecraft" and "space station" position -> 0 degree means spacecraft is below the space station,
+         *                      but the orientation of "spacecraft" be can totally opposite the "space station" -> Use for distinqush the relative position of spacecraft
+         *                      
+         *                      180 degree
+         *                       |
+         *                       |
+         *        +90 degree --- O --- +90 degree
+         *                       |
+         *                       |
+         *                       0 degree
+         */
         float orientationDiff = Mathf.Abs(spacecraft.transform.rotation.y - spaceStation.transform.rotation.y);
+        float positionOrientationDiff = Vector3.Angle(spacecraft.transform.position, targetPosition);
         int action = (int)vectorAction[0];
 
         // forward and backward
         if(action == 0 || action == 1)
         {
+            isMove = true;
             stepsCount++;
             if (action ==0)
             {
@@ -99,15 +122,18 @@ public class SpacecraftAgent : Agent
         // rotation
         if (action == 2 || action == 3)
         {
+            isMove = true;
             stepsCount++;
             if (action == 3)
             {
-                Orientation(rbSpacecraft, 1.0f * orientateSpeed);
+                //Orientation(rbSpacecraft, 1.0f * orientateSpeed);
+                spacecraft.transform.Rotate(Vector3.up, orientationAngle);
                 ClampAngularVelocity();
             }
             else
             {
-                Orientation(rbSpacecraft,- 1.0f * orientateSpeed);
+                //Orientation(rbSpacecraft,- 1.0f * orientateSpeed);
+                spacecraft.transform.Rotate(Vector3.up, -orientationAngle);
                 ClampAngularVelocity();
             }
         }
@@ -125,8 +151,9 @@ public class SpacecraftAgent : Agent
             initialStage = true;
             firstStage = false;
             secondStage = false;
-            float initialScale = 0.01f;
+            float initialScale = 0.005f;
             PositionReward(r, initialScale);
+            PositionOrientationReward(positionOrientationDiff, initialScale);
         }
         else
         {     
@@ -137,10 +164,11 @@ public class SpacecraftAgent : Agent
                 initialStage = false;
                 firstStage = false;
                 secondStage = true;
-                float secondStageScale = 0.1f;
+                float secondStageScale = 0.05f;
                 float secondStageOrientationScale = 2.0f;
                 PositionReward(r, secondStageScale);
                 OrientationReward(orientationDiff, secondStageOrientationScale);
+                PositionOrientationReward(positionOrientationDiff, secondStageOrientationScale);
 
             }
             else
@@ -150,17 +178,18 @@ public class SpacecraftAgent : Agent
                 initialStage = false;
                 firstStage = true;
                 secondStage = false;
-                float firstStagePositionScale = 0.05f;
+                float firstStagePositionScale = 0.01f;
                 float firstStageOrientationScale = 1.0f;
                 PositionReward(r, firstStagePositionScale);
                 OrientationReward(orientationDiff, firstStageOrientationScale);
+                PositionOrientationReward(positionOrientationDiff, firstStageOrientationScale);
             }
         }
 
         /*
-         * Punish for too many steps (above 200 steps)
+         * Punish for too many steps (above 1000 steps)
          */
-        if (stepsCount > 1000) //TBD
+        if (isMove && stepsCount > 1000) 
         {
             AddReward(-stepsCount * 0.01f); //TBD, The punish is propotional to the steps
         }
@@ -190,22 +219,28 @@ public class SpacecraftAgent : Agent
         {
             text.text = string.Format("[spacecraft] pos: ({0}, {1}, {2}), Orient Y {3}, Vel {4}, AngularVel {5}" +
                 ", [target] pos: ({6}, {7}, {8}), Orient Y {9}" +
-                ", distance: {10}" +
+                ", distance: {10}, Angle: {18}" +
                 ", reward: {11}, total reward:{12}, success: {13}/failure: {14}, successRate:{15}, steps:{16}, collisions:{17}"
                 ,spacecraft.transform.position.x, spacecraft.transform.position.y, spacecraft.transform.position.z, spacecraft.transform.rotation.y, rbSpacecraft.velocity.magnitude ,rbSpacecraft.angularVelocity.magnitude
                 ,targetPosition.x, targetPosition.y, targetPosition.z, targetOrientation.y
                 , r
-                , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount, collisionCount);
+                , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount, collisionCount
+                , positionOrientationDiff);
         }
 
         if (text_stage != null)
         {
-            text_stage.text = string.Format("[Stage]: Initial: {0}, First: {1}, Second: {2}",initialStage, firstStage, secondStage);
+            text_stage.text = string.Format("[Stage]: Initial: {0}, First: {1}, Second: {2}," +
+                "[Reward]: position: {3}, orientation: {4}, positionOrientation: {5} "
+                ,initialStage, firstStage, secondStage
+                , positionReward, orientationReward, positionOrientationReward);
         }
 
         // Update the position and orientation.
         previousR = r;
         previousOrientationDiff = orientationDiff;
+        previousPositonOrientationDiff = positionOrientationDiff;
+        isMove = false;
     }
 
     // Trigger Event
@@ -221,7 +256,7 @@ public class SpacecraftAgent : Agent
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));    
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
         spaceGargabe.transform.position = spaceStation.transform.position + new Vector3(6f, 0f, 8f); //related posisiton to 
-        spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
+        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
         targetPosition = spaceStation.transform.position + new Vector3(0, 0, -6); // (0, 0, -6) is the offset from space staion
         targetOrientation = spaceStation.transform.rotation;
 
@@ -232,6 +267,7 @@ public class SpacecraftAgent : Agent
         firstStage = false;
         secondStage = false;
         isTrigger = false;
+        isMove = false;
         SetReward(0);
         stepsCount = 0;
         
@@ -272,9 +308,37 @@ public class SpacecraftAgent : Agent
 
         //Exclude qual 
         if (r < previousR)
+        {
             AddReward(rewardPosition);
+            positionReward = rewardPosition; // for tracing
+        }
+            
         if (r > previousR)
-            AddReward(-rewardPosition);   
+        {
+            AddReward(-rewardPosition);
+            positionReward = -rewardPosition; // for tracing
+        }
+              
+    }
+
+    private void PositionOrientationReward(float positionOrientationDiff, float rewardScale)
+    {
+        // 0 is the best, 180 is the worst -> cosince
+        float rewardPositionOrientation = Mathf.Abs(Mathf.Cos(positionOrientationDiff / 2 * Mathf.PI)) * rewardScale;
+
+        if (positionOrientationDiff < previousPositonOrientationDiff)
+        {
+            AddReward(rewardPositionOrientation);
+            positionOrientationReward = rewardPositionOrientation; // for tracing
+        }
+           
+        if (positionOrientationDiff > previousPositonOrientationDiff)
+        {
+            AddReward(-rewardPositionOrientation);
+            positionOrientationReward = -rewardPositionOrientation; // for tracing
+        }
+            
+
     }
 
     // Based on the tracing information (spacecraft.transform.rotation.y)
@@ -283,13 +347,20 @@ public class SpacecraftAgent : Agent
     {
         // If diff = 0, reward, if diff = 1, punish ----> cosine function
         // If 1 Quaternion = 180 degree and 2pi radian = 180 degree  --> 1 Quaternion = 2 pi radian
-        float rewardOrientation = Mathf.Cos(orientationDiff/ 2*Mathf.PI) * rewardScale; //TBD
-        rewardOrientation = Mathf.Abs(rewardOrientation); // Make it positive
+        float rewardOrientation = Mathf.Abs(Mathf.Cos(orientationDiff/ 2*Mathf.PI)) * rewardScale; //TBD
 
         if (orientationDiff < previousOrientationDiff)
+        {
             AddReward(rewardOrientation);
+            orientationReward = rewardOrientation; // for tracing
+        }
+            
         if(orientationDiff > previousOrientationDiff)
+        {
             AddReward(-rewardOrientation);
+            orientationReward = -rewardOrientation; // for tracing
+        }
+            
     }
 
     /*

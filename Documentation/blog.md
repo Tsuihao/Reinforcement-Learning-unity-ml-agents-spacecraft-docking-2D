@@ -33,13 +33,24 @@ The goals / steps of this project are the following:
 **Need improvements:** 
 * without rotation reward
 * spacecraft does not learn from collision	
-* success and failure count has bug	
+* success and failure count has bug	(solved)
 * position reward is too high	
 * step punishment should be added	
 * collision punishment should be added
-* another reward function: maybe add a reward that after certain distance to the target point, the algorithm starts to adjust the reward function
+* another reward function: maybe add a reward that after certain distance to the target point, the algorithm starts to adjust the reward function <br>
 
-<br>
 **Training image:** <br>
 ![alt text][spacecraft_0]
 
+---
+### Spacecraft_1
+
+**Date:** 4/26 <br>
+**Reward function:** position, step <br>
+**Observation:**<br>
+**Improved points:**
+* solved previous bug by adjusting agents' decision frequency to 1 (in the inspector)
+* Add step reward function <br> 
+
+**Need improvements:**<br>
+**Training image:** <br>
