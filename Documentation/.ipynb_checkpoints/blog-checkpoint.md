@@ -52,11 +52,12 @@ The goals / steps of this project are the following:
 * Why position reward is the most weigthed but spacecraft do not know to apporach it?
 * Negative reward is too much than positive 
 * The second stage position reward function need to be modified: There is always the case that the spacecraft is slightly rotation near the space station but due the heavily negative reward at second stage, the total reward just become native. 
--> **Solution**: cancel the negative reward at second stage, for orientation reward and position reward?
+-> **Proposal solution**: cancel the negative reward at second stage, for orientation reward and position reward?
 * The initialization range should be increased.
+* Not sure does the agent learn to avoid the obstacles? <br>
 
-<br>
-**Improved points:**
+**Improved points:** <br>
+
 * solved previous bug by adjusting agents' decision frequency to 1 (in the inspector)
 * Add step reward function
 * Add orientation reward funciton
@@ -67,6 +68,7 @@ The goals / steps of this project are the following:
 * (Minus point): Changed orientation to non-rigid body rotation <br> 
 
 **Need improvements:**
+
 * orientation reward function scale is too sensitive
 * position orientation reward function scale is too non-sensitive <br>
 

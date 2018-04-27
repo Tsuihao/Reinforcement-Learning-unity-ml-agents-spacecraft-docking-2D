@@ -54,10 +54,10 @@ The goals / steps of this project are the following:
 * The second stage position reward function need to be modified: There is always the case that the spacecraft is slightly rotation near the space station but due the heavily negative reward at second stage, the total reward just become native. 
 -> **Proposal solution**: cancel the negative reward at second stage, for orientation reward and position reward?
 * The initialization range should be increased.
-* Not sure does the agent learn to avoid the obstacles?
+* Not sure does the agent learn to avoid the obstacles? <br>
 
-<br>
-**Improved points:**
+**Improved points:** <br>
+
 * solved previous bug by adjusting agents' decision frequency to 1 (in the inspector)
 * Add step reward function
 * Add orientation reward funciton
