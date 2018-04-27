@@ -8,9 +8,9 @@
 The goals / steps of this project are the following:
 * Design an effiencet and correct reward function
 
-[//]: # (Image References)
-
 [spacecraft_0]: ./Tensorboard/Spacecraft_0/spacecraft_0.png 
+[spacecraft_1]: ./Tensorboard/Spacecraft_1/spacecraft_1.JPG 
+
 
 ## Template
 **Date:**<br>
@@ -45,9 +45,18 @@ The goals / steps of this project are the following:
 ---
 ### Spacecraft_1
 
-**Date:** 4/26 <br>
+**Date:** 4/27 <br>
 **Reward function:** position, step, orientation, position orientation <br>
-**Observation:**<br>
+**Observation:**
+* Bad behaviour 
+* Why position reward is the most weigthed but spacecraft do not know to apporach it?
+* Negative reward is too much than positive 
+* The second stage position reward function need to be modified: There is always the case that the spacecraft is slightly rotation near the space station but due the heavily negative reward at second stage, the total reward just become native. 
+-> **Proposal solution**: cancel the negative reward at second stage, for orientation reward and position reward?
+* The initialization range should be increased.
+* Not sure does the agent learn to avoid the obstacles?
+
+<br>
 **Improved points:**
 * solved previous bug by adjusting agents' decision frequency to 1 (in the inspector)
 * Add step reward function
@@ -63,3 +72,6 @@ The goals / steps of this project are the following:
 * position orientation reward function scale is too non-sensitive <br>
 
 **Training image:** <br>
+![alt text][spacecraft_1]
+
+---
