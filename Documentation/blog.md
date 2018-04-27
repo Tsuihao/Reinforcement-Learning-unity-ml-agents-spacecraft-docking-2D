@@ -68,6 +68,7 @@ The goals / steps of this project are the following:
 * (Minus point): Changed orientation to non-rigid body rotation <br> 
 
 **Need improvements:**
+
 * orientation reward function scale is too sensitive
 * position orientation reward function scale is too non-sensitive <br>
 
