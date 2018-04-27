@@ -27,8 +27,8 @@ public class SpacecraftAgent : Agent
 
     private bool isTrigger = false;
     private bool isMove = false;
-    static private float initPosRange = 20f;
-    static private float rLimit = Mathf.Sqrt(Mathf.Pow(3 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
+    static private float initPosRange = 30f;
+    static private float rLimit = Mathf.Sqrt(Mathf.Pow(2 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
     private float previousR = rLimit; // maximum value
     private float previousOrientationDiff = 1; // maximum value
@@ -152,8 +152,8 @@ public class SpacecraftAgent : Agent
             firstStage = false;
             secondStage = false;
             float initialScale = 0.005f;
-            PositionReward(r, initialScale);
-            PositionOrientationReward(positionOrientationDiff, initialScale);
+            PositionReward(r, initialScale, true);
+            PositionOrientationReward(positionOrientationDiff, initialScale, true);
         }
         else
         {     
@@ -166,9 +166,9 @@ public class SpacecraftAgent : Agent
                 secondStage = true;
                 float secondStageScale = 0.05f;
                 float secondStageOrientationScale = 2.0f;
-                PositionReward(r, secondStageScale);
-                OrientationReward(orientationDiff, secondStageOrientationScale);
-                PositionOrientationReward(positionOrientationDiff, secondStageOrientationScale);
+                PositionReward(r, secondStageScale, false);
+                OrientationReward(orientationDiff, secondStageOrientationScale, false);
+                PositionOrientationReward(positionOrientationDiff, secondStageOrientationScale, false);
 
             }
             else
@@ -180,18 +180,18 @@ public class SpacecraftAgent : Agent
                 secondStage = false;
                 float firstStagePositionScale = 0.01f;
                 float firstStageOrientationScale = 1.0f;
-                PositionReward(r, firstStagePositionScale);
-                OrientationReward(orientationDiff, firstStageOrientationScale);
-                PositionOrientationReward(positionOrientationDiff, firstStageOrientationScale);
+                PositionReward(r, firstStagePositionScale, false);
+                OrientationReward(orientationDiff, firstStageOrientationScale, true);
+                PositionOrientationReward(positionOrientationDiff, firstStageOrientationScale, true);
             }
         }
 
         /*
-         * Punish for too many steps (above 1000 steps)
+         * Punish for too many steps
          */
-        if (isMove && stepsCount > 1000) 
+        if (isMove && stepsCount > 2000) 
         {
-            AddReward(-stepsCount * 0.01f); //TBD, The punish is propotional to the steps
+            AddReward(-stepsCount * 0.0005f); //The punish is propotional to the steps
         }
 
         // Failure: over the rLmint or hit space garbage
@@ -302,7 +302,7 @@ public class SpacecraftAgent : Agent
     }
 
     // Reward functions
-    private void PositionReward(float r, float rewardScale)
+    private void PositionReward(float r, float rewardScale, bool isPunish)
     {
         float rewardPosition = (rLimit - r) * rewardScale;
 
@@ -312,16 +312,18 @@ public class SpacecraftAgent : Agent
             AddReward(rewardPosition);
             positionReward = rewardPosition; // for tracing
         }
-            
-        if (r > previousR)
+
+        if (isPunish)
         {
-            AddReward(-rewardPosition);
-            positionReward = -rewardPosition; // for tracing
-        }
-              
+            if (r > previousR)
+            {
+                AddReward(-rewardPosition);
+                positionReward = -rewardPosition; // for tracing
+            }
+        }             
     }
 
-    private void PositionOrientationReward(float positionOrientationDiff, float rewardScale)
+    private void PositionOrientationReward(float positionOrientationDiff, float rewardScale, bool isPunish)
     {
         // 0 is the best, 180 is the worst -> cosince
         float rewardPositionOrientation = Mathf.Abs(Mathf.Cos(positionOrientationDiff / 2 * Mathf.PI)) * rewardScale;
@@ -331,19 +333,21 @@ public class SpacecraftAgent : Agent
             AddReward(rewardPositionOrientation);
             positionOrientationReward = rewardPositionOrientation; // for tracing
         }
-           
-        if (positionOrientationDiff > previousPositonOrientationDiff)
+        
+        if(isPunish)
         {
-            AddReward(-rewardPositionOrientation);
-            positionOrientationReward = -rewardPositionOrientation; // for tracing
+            if (positionOrientationDiff > previousPositonOrientationDiff)
+            {
+                AddReward(-rewardPositionOrientation);
+                positionOrientationReward = -rewardPositionOrientation; // for tracing
+            }
         }
-            
 
     }
 
     // Based on the tracing information (spacecraft.transform.rotation.y)
     // -1 < Orientation.y < 1. Documentation: https://docs.unity3d.com/ScriptReference/Quaternion-y.html
-    private void OrientationReward(float orientationDiff, float rewardScale)
+    private void OrientationReward(float orientationDiff, float rewardScale, bool isPunish)
     {
         // If diff = 0, reward, if diff = 1, punish ----> cosine function
         // If 1 Quaternion = 180 degree and 2pi radian = 180 degree  --> 1 Quaternion = 2 pi radian
@@ -354,13 +358,15 @@ public class SpacecraftAgent : Agent
             AddReward(rewardOrientation);
             orientationReward = rewardOrientation; // for tracing
         }
-            
-        if(orientationDiff > previousOrientationDiff)
+        
+        if(isPunish)
         {
-            AddReward(-rewardOrientation);
-            orientationReward = -rewardOrientation; // for tracing
-        }
-            
+            if (orientationDiff > previousOrientationDiff)
+            {
+                AddReward(-rewardOrientation);
+                orientationReward = -rewardOrientation; // for tracing
+            }
+        }           
     }
 
     /*
