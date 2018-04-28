@@ -7,16 +7,16 @@ public class SpacecraftAgent : Agent
     public GameObject spaceStation;
     public GameObject spacecraft;
     public GameObject spaceGargabe;
+    public GameObject dockingPoint;
     Rigidbody rbSpacecraft;
+    RayPerception rayPer;
 
     // Hyperparameters
-    private Vector3 targetPosition;
-    private Quaternion targetOrientation; // (x, y, z, w)
     private float positionTolerance = 1.5f;
     private float orientTolerance = 0.0055f * 5;  // 1 degree = 0.0055
     private float velocityTorlerance = 0.5f;
     private float angularVelocityTolerence = 0.08f;
-    private float orientateSpeed = 0.5f;
+    private float orientateSpeed = 5f;
     private int orientationAngle = 2;
     private float movementSpeed = 2.0f;
     private float maxVelocity = 10.0f;
@@ -42,7 +42,6 @@ public class SpacecraftAgent : Agent
     private float successCount = 0;
     private float failureCount = 0;
     private int stepsCount = 0;
-    private int collisionCount = 0;
     private bool initialStage = false;
     private bool firstStage = false;
     private bool secondStage = false;
@@ -60,16 +59,20 @@ public class SpacecraftAgent : Agent
         {
             Debug.LogError("Rigid body could not be found.");
         }
-        // Add offset from the space station
-        targetPosition = spaceStation.transform.position + new Vector3(0, 0, -6); // (0, 0, -6) is the offset from space staion
-        targetOrientation = spaceStation.transform.rotation; 
+        rayPer = GetComponent<RayPerception>();
+        if (rayPer == null)
+        {
+            Debug.LogError("RayPerception could not be found.");
+        }
     }
 
     public override void CollectObservations()
     {
-        AddVectorObs(spacecraft.transform.rotation.y); //1
-        AddVectorObs(rbSpacecraft.velocity); //3 
-        AddVectorObs(spacecraft.transform.position - spaceStation.transform.position); //3
+        float rayDistance = 15f;
+        float[] rayAngles = { 20f, 40f, 60f, 80f, 100f, 120f, 140, 160f};
+        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint"};
+        AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
+        AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
     }
 
@@ -82,7 +85,7 @@ public class SpacecraftAgent : Agent
      */
     public override void AgentAction(float[] vectorAction, string textAction)
     {
-        float r = Vector3.Distance(spacecraft.transform.position, targetPosition);// distance from spacecraft to target position (space station + offset);
+        float r = Vector3.Distance(spacecraft.transform.position, dockingPoint.transform.position);// distance from spacecraft to target position (space station + offset);
 
         /*
          * To distinguish the naming:
@@ -99,11 +102,12 @@ public class SpacecraftAgent : Agent
          *                       0 degree
          */
         float orientationDiff = Mathf.Abs(spacecraft.transform.rotation.y - spaceStation.transform.rotation.y);
-        float positionOrientationDiff = Vector3.Angle(spacecraft.transform.position, targetPosition);
+        float positionOrientationDiff = Vector3.Angle(spacecraft.transform.position, dockingPoint.transform.position);
         int action = (int)vectorAction[0];
 
+        AddReward(-1f / agentParameters.maxStep);
         // forward and backward
-        if(action == 0 || action == 1)
+        if (action == 0 || action == 1)
         {
             isMove = true;
             stepsCount++;
@@ -145,74 +149,74 @@ public class SpacecraftAgent : Agent
         * The reward is propotional to the distance (the closer the higher)
         */
 
-        // TODO: Need to Refactor! The nested condisiton is ugly.
-        if (r > firstStageDistance)
-        {
-            // [Initial stage]: start to approach the station
-            initialStage = true;
-            firstStage = false;
-            secondStage = false;
-            float initialScale = 0.005f;
-            PositionReward(r, initialScale, true);
-            //PositionOrientationReward(positionOrientationDiff, initialScale, true);
-        }
-        else
-        {     
-            // [Second stage]: start to deaccelerate
-            // TODO: De-acceleration and make sure the angle is correct
-            if(r < secondStageDistnace)
-            {
-                initialStage = false;
-                firstStage = false;
-                secondStage = true;
-                float secondStageScale = 0.05f;
-                float secondStageOrientationScale = 2.0f;
-                PositionReward(r, secondStageScale, false);
-                OrientationReward(orientationDiff, secondStageOrientationScale, false);
-                PositionOrientationReward(positionOrientationDiff, secondStageOrientationScale, false);
+        //// TODO: Need to Refactor! The nested condisiton is ugly.
+        //if (r > firstStageDistance)
+        //{
+        //    // [Initial stage]: start to approach the station
+        //    initialStage = true;
+        //    firstStage = false;
+        //    secondStage = false;
+        //    float initialScale = 0.005f;
+        //    PositionReward(r, initialScale, true);
+        //    //PositionOrientationReward(positionOrientationDiff, initialScale, true);
+        //}
+        //else
+        //{     
+        //    // [Second stage]: start to deaccelerate
+        //    // TODO: De-acceleration and make sure the angle is correct
+        //    if(r < secondStageDistnace)
+        //    {
+        //        initialStage = false;
+        //        firstStage = false;
+        //        secondStage = true;
+        //        float secondStageScale = 0.05f;
+        //        float secondStageOrientationScale = 2.0f;
+        //        PositionReward(r, secondStageScale, false);
+        //        OrientationReward(orientationDiff, secondStageOrientationScale, false);
+        //        PositionOrientationReward(positionOrientationDiff, secondStageOrientationScale, false);
 
-            }
-            else
-            {
-                // [First stage]: start to adjust the orientation
-                // TODO: Align the spacecraft orientation to the space station orientation
-                initialStage = false;
-                firstStage = true;
-                secondStage = false;
-                float firstStagePositionScale = 0.01f;
-                float firstStageOrientationScale = 1.0f;
-                PositionReward(r, firstStagePositionScale, false);
-                OrientationReward(orientationDiff, firstStageOrientationScale, true);
-                PositionOrientationReward(positionOrientationDiff, firstStageOrientationScale, true);
-            }
-        }
+        //    }
+        //    else
+        //    {
+        //        // [First stage]: start to adjust the orientation
+        //        // TODO: Align the spacecraft orientation to the space station orientation
+        //        initialStage = false;
+        //        firstStage = true;
+        //        secondStage = false;
+        //        float firstStagePositionScale = 0.01f;
+        //        float firstStageOrientationScale = 1.0f;
+        //        PositionReward(r, firstStagePositionScale, false);
+        //        OrientationReward(orientationDiff, firstStageOrientationScale, true);
+        //        PositionOrientationReward(positionOrientationDiff, firstStageOrientationScale, true);
+        //    }
+        //}
 
-        /*
-         * Punish for too many steps
-         */
-        if (isMove && stepsCount > 1500) 
-        {
-            stepReward = -stepsCount * 0.0005f;
-            AddReward(stepReward); //The punish is propotional to the steps
-        }
+        ///*
+        // * Punish for too many steps
+        // */
+        //if (isMove && stepsCount > 1500) 
+        //{
+        //    stepReward = -stepsCount * 0.0005f;
+        //    AddReward(stepReward); //The punish is propotional to the steps
+        //}
 
-        // Failure: over the rLmint or hit space garbage
-        if (r >= rLimit || isTrigger == true || stepsCount > 3000)
-        {
-            Done();
-            SetReward(-1.0f);
-            failureCount++;
-            return;
-        }
+        //// Failure: over the rLmint or hit space garbage
+        //if (r >= rLimit || isTrigger == true || stepsCount > 3000)
+        //{
+        //    Done();
+        //    SetReward(-1.0f);
+        //    failureCount++;
+        //    return;
+        //}
 
-        // Success
-        if (IsDock(r, spacecraft.transform.rotation, targetOrientation, rbSpacecraft))
-        {
-            Done();
-            SetReward(1.0f);
-            successCount++;
-            return;
-        }
+        //// Success
+        //if (IsDock(r, spacecraft.transform.rotation, dockingPoint.transform.rotation, rbSpacecraft))
+        //{
+        //    Done();
+        //    SetReward(1.0f);
+        //    successCount++;
+        //    return;
+        //}
         
         //-------------------------------------------------Reward fucntion ----------------------------------------------------------
 
@@ -221,12 +225,12 @@ public class SpacecraftAgent : Agent
         {
             text.text = string.Format("[spacecraft] pos: ({0}, {1}, {2}), Orient Y {3}, Vel {4}, AngularVel {5}" +
                 ", [target] pos: ({6}, {7}, {8}), Orient Y {9}" +
-                ", distance: {10}, Angle: {18}" +
-                ", reward: {11}, total reward:{12}, success: {13}/failure: {14}, successRate:{15}, steps:{16}, collisions:{17}"
+                ", distance: {10}, Angle: {17}" +
+                ", reward: {11}, total reward:{12}, success: {13}/failure: {14}, successRate:{15}, steps:{16}"
                 ,spacecraft.transform.position.x, spacecraft.transform.position.y, spacecraft.transform.position.z, spacecraft.transform.rotation.y, rbSpacecraft.velocity.magnitude ,rbSpacecraft.angularVelocity.magnitude
-                ,targetPosition.x, targetPosition.y, targetPosition.z, targetOrientation.y
+                , dockingPoint.transform.position.x, dockingPoint.transform.position.y, dockingPoint.transform.position.z, dockingPoint.transform.rotation.y
                 , r
-                , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount, collisionCount
+                , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount
                 , positionOrientationDiff);
         }
 
@@ -250,7 +254,23 @@ public class SpacecraftAgent : Agent
     {
         Debug.Log(gameObject.name + " was triggered by " + other.gameObject.name);
         isTrigger = true;
-        collisionCount++;
+    }
+
+    // Collision Evenet
+    void OnCollisionEnter(Collision col)
+    {
+        Debug.Log(gameObject.name + " was collided by " + col.gameObject.name);
+        if(col.gameObject.CompareTag("dockingPoint"))
+        {
+            successCount++;
+            SetReward(1f);
+        }
+        else
+        {
+            failureCount++;
+            SetReward(-0.1f);
+        }
+        Done();   
     }
 
     public override void AgentReset()
@@ -259,8 +279,8 @@ public class SpacecraftAgent : Agent
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
         spaceGargabe.transform.position = spaceStation.transform.position + new Vector3(6f, 0f, 8f); //related posisiton to 
         //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
-        targetPosition = spaceStation.transform.position + new Vector3(0, 0, -6); // (0, 0, -6) is the offset from space staion
-        targetOrientation = spaceStation.transform.rotation;
+        dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -6) is the offset from space staion
+        dockingPoint.transform.rotation = spaceStation.transform.rotation;
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
         rbSpacecraft.angularVelocity = new Vector3(0f, 0f, 0f);
@@ -391,7 +411,7 @@ public class SpacecraftAgent : Agent
             isPositionValid = true;
 
         // 2. Orientation is close enough
-        if (Mathf.Abs(spacecraftOrient.y - targetOrientation.y) < orientTolerance)
+        if (Mathf.Abs(spacecraftOrient.y - dockingPoint.transform.rotation.y) < orientTolerance)
             isOrientationValid = true;
 
         // 3. Spacecraft has very low velocity
