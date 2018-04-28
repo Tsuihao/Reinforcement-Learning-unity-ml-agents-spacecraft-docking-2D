@@ -68,14 +68,13 @@ public class SpacecraftAgent : Agent
 
     public override void CollectObservations()
     {
-        float rayDistance = 15f;
-        float[] rayAngles = { 20f, 40f, 60f, 80f, 100f, 120f, 140, 160f};
+        float rayDistance = 80f;
+        float[] rayAngles = { 20f, 40f, 60f, 80f, 100f, 120f, 140, 160f, 180f, 200f, 220f, 240f, 260f, 280f, 300f, 320f, 340f, 360f};
         string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint"};
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
     }
-
     /*
      * 0: Up    Arrow: positive z 
      * 1: Down  Arrow: negative z 
@@ -277,7 +276,6 @@ public class SpacecraftAgent : Agent
     {
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));    
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
-        spaceGargabe.transform.position = spaceStation.transform.position + new Vector3(6f, 0f, 8f); //related posisiton to 
         //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -6) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
@@ -313,7 +311,6 @@ public class SpacecraftAgent : Agent
 
     private void ThrustForward(float amount)
     {
-        rbSpacecraft.AddForce(transform.forward * amount, ForceMode.Acceleration);
         rbSpacecraft.AddForce(transform.forward * amount, ForceMode.Acceleration);
     }
 
