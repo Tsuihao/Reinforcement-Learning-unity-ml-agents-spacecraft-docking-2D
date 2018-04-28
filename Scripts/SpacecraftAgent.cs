@@ -8,6 +8,11 @@ public class SpacecraftAgent : Agent
     public GameObject spacecraft;
     public GameObject spaceGargabe;
     public GameObject dockingPoint;
+    public GameObject guidence1;
+    public GameObject guidence2;
+    public GameObject guidence3;
+    public GameObject guidence4;
+
     Rigidbody rbSpacecraft;
     RayPerception rayPer;
 
@@ -63,8 +68,8 @@ public class SpacecraftAgent : Agent
     public override void CollectObservations()
     {
         float rayDistance = 80f;
-        float[] rayAngles = { 20f, 40f, 60f, 80f, 100f, 120f, 140, 160f, 180f, 200f, 220f, 240f, 260f, 280f, 300f, 320f, 340f, 360f};
-        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint"};
+        float[] rayAngles = {60f, 70f ,80f, 90f, 100f, 110f, 120f};
+        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidence"};
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
@@ -217,6 +222,12 @@ public class SpacecraftAgent : Agent
     {
         Debug.Log(gameObject.name + " was triggered by " + other.gameObject.name);
         isTrigger = true;
+        if (other.gameObject.CompareTag("guidence"))
+        {
+            AddReward(1f);
+            other.gameObject.SetActive(false);
+            //Destroy(other.gameObject);
+        }
     }
 
     // Collision Evenet
@@ -227,22 +238,30 @@ public class SpacecraftAgent : Agent
         {
             successCount++;
             SetReward(1f);
+            Done();
         }
+
         else
         {
             failureCount++;
             SetReward(-1f);
+            Done();
         }
-        Done();   
+        
     }
 
     public override void AgentReset()
     {
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));    
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
-        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -8); // for test
+        spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -6) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
+
+        guidence1.SetActive(true);
+        guidence2.SetActive(true);
+        guidence3.SetActive(true);
+        guidence4.SetActive(true);
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
         rbSpacecraft.angularVelocity = new Vector3(0f, 0f, 0f);
