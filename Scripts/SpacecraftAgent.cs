@@ -49,6 +49,7 @@ public class SpacecraftAgent : Agent
     private float positionReward = 0;
     private float orientationReward = 0;
     private float positionOrientationReward = 0;
+    private float stepReward = 0;
 
 
 
@@ -153,7 +154,7 @@ public class SpacecraftAgent : Agent
             secondStage = false;
             float initialScale = 0.005f;
             PositionReward(r, initialScale, true);
-            PositionOrientationReward(positionOrientationDiff, initialScale, true);
+            //PositionOrientationReward(positionOrientationDiff, initialScale, true);
         }
         else
         {     
@@ -189,9 +190,10 @@ public class SpacecraftAgent : Agent
         /*
          * Punish for too many steps
          */
-        if (isMove && stepsCount > 2000) 
+        if (isMove && stepsCount > 1500) 
         {
-            AddReward(-stepsCount * 0.0005f); //The punish is propotional to the steps
+            stepReward = -stepsCount * 0.0005f;
+            AddReward(stepReward); //The punish is propotional to the steps
         }
 
         // Failure: over the rLmint or hit space garbage
@@ -231,9 +233,9 @@ public class SpacecraftAgent : Agent
         if (text_stage != null)
         {
             text_stage.text = string.Format("[Stage]: Initial: {0}, First: {1}, Second: {2}," +
-                "[Reward]: position: {3}, orientation: {4}, positionOrientation: {5} "
+                "[Reward]: position: {3}, orientation: {4}, positionOrientation: {5}, step: {6}"
                 ,initialStage, firstStage, secondStage
-                , positionReward, orientationReward, positionOrientationReward);
+                , positionReward, orientationReward, positionOrientationReward, stepReward);
         }
 
         // Update the position and orientation.
@@ -326,7 +328,7 @@ public class SpacecraftAgent : Agent
     private void PositionOrientationReward(float positionOrientationDiff, float rewardScale, bool isPunish)
     {
         // 0 is the best, 180 is the worst -> cosince
-        float rewardPositionOrientation = Mathf.Abs(Mathf.Cos(positionOrientationDiff / 2 * Mathf.PI)) * rewardScale;
+        float rewardPositionOrientation = Mathf.Abs(Mathf.Cos(positionOrientationDiff / Mathf.PI)) * rewardScale;
 
         if (positionOrientationDiff < previousPositonOrientationDiff)
         {
@@ -350,8 +352,8 @@ public class SpacecraftAgent : Agent
     private void OrientationReward(float orientationDiff, float rewardScale, bool isPunish)
     {
         // If diff = 0, reward, if diff = 1, punish ----> cosine function
-        // If 1 Quaternion = 180 degree and 2pi radian = 180 degree  --> 1 Quaternion = 2 pi radian
-        float rewardOrientation = Mathf.Abs(Mathf.Cos(orientationDiff/ 2*Mathf.PI)) * rewardScale; //TBD
+        // If 1 Quaternion = 180 degree and pi radian = 180 degree  --> 1 Quaternion =  pi radian
+        float rewardOrientation = Mathf.Abs(Mathf.Cos(orientationDiff/ Mathf.PI)) * rewardScale; //TBD
 
         if (orientationDiff < previousOrientationDiff)
         {

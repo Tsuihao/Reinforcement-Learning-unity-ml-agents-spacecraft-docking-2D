@@ -20,7 +20,6 @@ default:
 
 SpacecraftBrain:
     num_epoch: 5
-    max_steps: 6.0e6
+    max_steps: 3.0e6
     batch_size: 512
     summary_freq: 2000
-    

@@ -10,7 +10,7 @@ The goals / steps of this project are the following:
 
 [spacecraft_0]: ./Tensorboard/Spacecraft_0/spacecraft_0.png 
 [spacecraft_1]: ./Tensorboard/Spacecraft_1/spacecraft_1.JPG 
-
+[spacecraft_2]: ./Tensorboard/Spacecraft_2/spacecraft_2.JPG 
 
 ## Template
 **Date:**<br>
@@ -77,3 +77,19 @@ The goals / steps of this project are the following:
 ![alt text][spacecraft_1]
 
 ---
+## Spacecraft_2
+
+**Date:** 4/27 <br>
+**Reward function:** same as previous <br>
+**Observation:** 
+* Orientation is wrong 
+* Somehow the spacecraft is not knowing to approaching the target(may be the position orientation reward is conflict, due to it is only care about "below the station") <br>
+
+**Improved points:**<br> 
+**Need improvements:** reward functions<br>
+**Training image:** 
+![alt text][spacecraft_2]
+<br>
+ --- 
+ ## Spacecraft_3
+ 
