@@ -11,7 +11,7 @@ public class SpacecraftAgent : Agent
     public GameObject guidance1;
     public GameObject guidance2;
     public GameObject guidance3;
-    public GameObject guidance4;
+    public GameObject guidance_side;
 
     Rigidbody rbSpacecraft;
     RayPerception rayPer;
@@ -65,16 +65,15 @@ public class SpacecraftAgent : Agent
     {
         float rayDistance = 80f;
         float[] rayAngles = { 60f, 70f, 80f, 90f, 100f, 110f, 120f };
-        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidance"};
+        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidance", "guidance2"};
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
     }
     /*
      * 0: Up    Arrow: positive z 
-     * 1: Down  Arrow: negative z 
-     * 2: Q     Key:   positive rotation y
-     * 3: W     Key:   negative rotation y
+     * 2: left  Arrow: positive rotation y
+     * 3: right Arrow: negative rotation y
      * 
      */
     public override void AgentAction(float[] vectorAction, string textAction)
@@ -84,21 +83,13 @@ public class SpacecraftAgent : Agent
 
         AddReward(-1f / agentParameters.maxStep);
         // forward and backward
-        if (action == 0 || action == 1)
+        if (action == 0)
         {
             isMove = true;
             stepsCount++;
-            if (action ==0)
-            {
-                ThrustForward(movementSpeed);
-                ClampVelocity();
-            }
-            else
-            {
-                ThrustForward(-movementSpeed);
-                ClampVelocity();
-            }
-            
+
+            ThrustForward(movementSpeed);
+            ClampVelocity();      
         }
 
         // rotation
@@ -140,6 +131,13 @@ public class SpacecraftAgent : Agent
     void OnTriggerEnter(Collider other)
     {
         Debug.Log(gameObject.name + " was triggered by " + other.gameObject.name);
+
+        if (other.gameObject.CompareTag("guidance2"))
+        {
+            AddReward(0.01f);
+            other.gameObject.SetActive(false);
+        }
+
         if (other.gameObject.CompareTag("guidance"))
         {
             AddReward(1f);
@@ -198,11 +196,11 @@ public class SpacecraftAgent : Agent
         guidance1.SetActive(true);
         guidance2.SetActive(true);
         guidance3.SetActive(true);
-        guidance4.SetActive(true);
+        guidance_side.SetActive(true);
         guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -5f);
         guidance2.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6.5f);
         guidance3.transform.position = spaceStation.transform.position + new Vector3(0, 0, -8f);
-        guidance4.transform.position = spaceStation.transform.position + new Vector3(0, 0, -9.5f);
+        guidance_side.transform.position = spaceStation.transform.position + new Vector3(-10.0f, 0, 0f);
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
         rbSpacecraft.angularVelocity = new Vector3(0f, 0f, 0f);
