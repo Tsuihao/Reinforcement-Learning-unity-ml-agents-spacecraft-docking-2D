@@ -64,7 +64,7 @@ public class SpacecraftAgent : Agent
     public override void CollectObservations()
     {
         float rayDistance = 80f;
-        float[] rayAngles = { 80f, 85f, 90f, 95f, 100f };
+        float[] rayAngles = { 60f, 70f, 80f, 90f, 100f, 110f, 120f };
         string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidance"};
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
