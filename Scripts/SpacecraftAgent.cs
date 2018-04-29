@@ -23,8 +23,8 @@ public class SpacecraftAgent : Agent
     private float angularVelocityTolerence = 0.08f;
     private float orientateSpeed = 5f;
     private int orientationAngle = 2;
-    private float movementSpeed = 2.0f;
-    private float maxVelocity = 3.0f;
+    private float movementSpeed = 10.0f;
+    private float maxVelocity = 10.0f;
     private float maxAngularVelocity = 3.0f;
 
     private bool isMove = false;
@@ -191,6 +191,9 @@ public class SpacecraftAgent : Agent
         //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -3.4f) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
+
+        spaceStation.transform.rotation = new Quaternion(0f, 0f, 0f, 0f);
+        dockingPoint.transform.rotation = new Quaternion(0f, 0f, 0f, 0f);
 
         guidance1.SetActive(true);
         guidance2.SetActive(true);
