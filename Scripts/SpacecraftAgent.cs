@@ -23,7 +23,7 @@ public class SpacecraftAgent : Agent
     private float angularVelocityTolerence = 0.08f;
     private float orientateSpeed = 5f;
     private int orientationAngle = 2;
-    private float movementSpeed = 10.0f;
+    private float movementSpeed = 5.0f; //Force
     private float maxVelocity = 10.0f;
     private float maxAngularVelocity = 3.0f;
 
@@ -64,7 +64,7 @@ public class SpacecraftAgent : Agent
     public override void CollectObservations()
     {
         float rayDistance = 80f;
-        float[] rayAngles = {60f, 70f ,80f, 90f, 100f, 110f, 120f};
+        float[] rayAngles = { 80f, 85f, 90f, 95f, 100f };
         string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidance"};
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
