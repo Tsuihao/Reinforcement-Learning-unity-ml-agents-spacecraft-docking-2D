@@ -83,13 +83,21 @@ public class SpacecraftAgent : Agent
 
         AddReward(-1f / agentParameters.maxStep);
         // forward and backward
-        if (action == 0)
+        if (action == 0 || action ==1)
         {
             isMove = true;
             stepsCount++;
-
-            ThrustForward(movementSpeed);
-            ClampVelocity();      
+            if(action ==0)
+            {
+                ThrustForward(movementSpeed);
+                ClampVelocity();
+            }
+            else
+            {
+                ThrustForward(-movementSpeed);
+                ClampVelocity();
+            }
+             
         }
 
         // rotation
