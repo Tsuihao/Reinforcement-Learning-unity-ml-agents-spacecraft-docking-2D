@@ -233,7 +233,7 @@ public class SpacecraftAgent : Agent
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         //spaceStation.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
-        spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
+        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -3.4f) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
 
