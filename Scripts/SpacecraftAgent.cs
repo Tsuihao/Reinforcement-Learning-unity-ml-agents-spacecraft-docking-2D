@@ -17,40 +17,43 @@ public class SpacecraftAgent : Agent
     RayPerception rayPer;
 
     // Hyperparameters
-    private float positionTolerance = 1.5f;
-    private float orientTolerance = 0.0055f * 5;  // 1 degree = 0.0055
-    private float velocityTorlerance = 1.0f;
-    private float angularVelocityTolerence = 0.08f;
-    private float orientateSpeed = 5f;
-    private int orientationAngle = 2;
-    private float movementSpeed = 5.0f; //Force
-    private float maxVelocity = 10.0f;
-    private float maxAngularVelocity = 3.0f;
+    private static float positionTolerance = 1.5f;
+    private static float orientTolerance = 0.0055f * 5;  // 1 degree = 0.0055
+    private static float velocityTorlerance = 1.0f;
+    private static float angularVelocityTolerence = 0.08f;
+    private static float orientateSpeed = 5f; // rigid body
+    private static int orientationAngle = 2; // non-rigid body
+    private static float movementSpeed = 5.0f; //Force
+    private static float maxVelocity = 10.0f;
+    private static float maxAngularVelocity = 3.0f;
 
     private bool isMove = false;
-    static private float initPosRange = 30f;
-    static private float rLimit = Mathf.Sqrt(Mathf.Pow(2 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
+    private bool attitudeControlStart = false;
+    private static float initPosRange = 30f;
+    private static float rLimit = Mathf.Sqrt(Mathf.Pow(2 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
     private float previousR = rLimit; // maximum value
     private float previousOrientationDiff = 1; // maximum value
+    private float previousVelocity = maxVelocity; // maximum value
 
     // Tracing
     [SerializeField]
     private UnityEngine.UI.Text text;
     [SerializeField]
-    private UnityEngine.UI.Text text_result;
+    private UnityEngine.UI.Text textAttitudeControl;
+    [SerializeField]
+    private UnityEngine.UI.Text textResult;
     private float successCount = 0;
     private float perfectCount = 0;
     private float failureCount = 0;
     private int stepsCount = 0;
-    private float positionReward = 0;
-
-
+    private float oritentationReward = 0;
+    private float velocityReward = 0;
 
     public override void InitializeAgent()
     {
         rbSpacecraft = spacecraft.GetComponent<Rigidbody>();
-        if(rbSpacecraft == null)
+        if (rbSpacecraft == null)
         {
             Debug.LogError("Rigid body could not be found.");
         }
@@ -65,13 +68,14 @@ public class SpacecraftAgent : Agent
     {
         float rayDistance = 80f;
         float[] rayAngles = { 60f, 70f, 80f, 90f, 100f, 110f, 120f };
-        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall" ,"dockingPoint", "guidance", "guidance2"};
+        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall", "dockingPoint", "guidance", "guidance2" };
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
     }
     /*
      * 0: Up    Arrow: positive z 
+     * 1: Down  Arrow: negative z
      * 2: left  Arrow: positive rotation y
      * 3: right Arrow: negative rotation y
      * 
@@ -79,43 +83,73 @@ public class SpacecraftAgent : Agent
     public override void AgentAction(float[] vectorAction, string textAction)
     {
         float r = Vector3.Distance(spacecraft.transform.position, dockingPoint.transform.position);// distance from spacecraft to target position (space station + offset);
+        float orientationDiff = Mathf.Abs(spacecraft.transform.rotation.y - dockingPoint.transform.rotation.y);
+        float velocity = rbSpacecraft.velocity.magnitude;
+
         int action = (int)vectorAction[0];
 
         AddReward(-1f / agentParameters.maxStep);
-        // forward and backward
-        if (action == 0 || action ==1)
+
+        if (action != -1) // default action = -1 in Unity inspector
         {
             isMove = true;
             stepsCount++;
-            if(action ==0)
+
+            // Foward
+            if (action == 0)
             {
                 ThrustForward(movementSpeed);
                 ClampVelocity();
             }
-            else
+            // Backward
+            if (action == 1)
             {
                 ThrustForward(-movementSpeed);
                 ClampVelocity();
             }
-             
-        }
-
-        // rotation
-        if (action == 2 || action == 3)
-        {
-            isMove = true;
-            stepsCount++;
+            // Position y rotation
+            if (action == 2)
+            {
+                //Orientation(rbSpacecraft,- 1.0f * orientateSpeed);
+                spacecraft.transform.Rotate(Vector3.up, -orientationAngle);
+                ClampAngularVelocity();
+            }
+            // Negative y rotation
             if (action == 3)
             {
                 //Orientation(rbSpacecraft, 1.0f * orientateSpeed);
                 spacecraft.transform.Rotate(Vector3.up, orientationAngle);
                 ClampAngularVelocity();
             }
+
+        }
+
+        /*
+         * Start to execute attitude control
+         */
+        if (attitudeControlStart)
+        {
+            //1. Control orientation
+            if(orientationDiff < 0.07) //TBD
+            {
+                AddReward(0.01f);
+                oritentationReward += 0.01f;
+            }
             else
             {
-                //Orientation(rbSpacecraft,- 1.0f * orientateSpeed);
-                spacecraft.transform.Rotate(Vector3.up, -orientationAngle);
-                ClampAngularVelocity();
+                AddReward(-0.01f);
+                oritentationReward -= 0.01f;
+            }
+
+            if(velocity < 1.0f)
+            {
+                AddReward(0.01f);
+                velocityReward += 0.01f;
+            }
+            else
+            {
+                AddReward(-0.01f);
+                velocityReward -= 0.01f;
             }
         }
 
@@ -125,13 +159,21 @@ public class SpacecraftAgent : Agent
             text.text = string.Format("[spacecraft] pos: ({0}, {1}, {2}), Orient Y {3}, Vel {4}, AngularVel {5}" +
                 ", distance: {6}" +
                 ", reward: {7}, total reward:{8}, success: {9}/failure: {10}, successRate:{11}%, steps:{12}, perfect: {13}"
-                ,spacecraft.transform.position.x, spacecraft.transform.position.y, spacecraft.transform.position.z, spacecraft.transform.rotation.y, rbSpacecraft.velocity.magnitude ,rbSpacecraft.angularVelocity.magnitude
+                , spacecraft.transform.position.x, spacecraft.transform.position.y, spacecraft.transform.position.z, spacecraft.transform.rotation.y, rbSpacecraft.velocity.magnitude, rbSpacecraft.angularVelocity.magnitude
                 , r
                 , GetReward(), GetCumulativeReward(), successCount, failureCount, (successCount / (successCount + failureCount)) * 100, stepsCount, perfectCount);
         }
 
+        if(textAttitudeControl != null)
+        {
+            textAttitudeControl.text = string.Format("[Attitude control] start:{0}, orientationDiff: {1}, orientationReward:{2}, velocityReward{3}, total reward: {4}"
+                , attitudeControlStart, orientationDiff, oritentationReward, velocityReward, oritentationReward + velocityReward);
+        }
+
         // Update the position and orientation.
         previousR = r;
+        previousVelocity = velocity;
+        previousOrientationDiff = orientationDiff;
         isMove = false;
     }
 
@@ -148,6 +190,7 @@ public class SpacecraftAgent : Agent
 
         if (other.gameObject.CompareTag("guidance"))
         {
+            attitudeControlStart = true; // Start to perform altitude control
             AddReward(1f);
             other.gameObject.SetActive(false);
         }
@@ -159,18 +202,16 @@ public class SpacecraftAgent : Agent
             {
                 perfectCount++;
                 AddReward(100f); //TBD
-                text_result.text = string.Format("Perfect docking!");
+                textResult.text = string.Format("Perfect docking!");
             }
 
             else
             {
                 AddReward(5f); //TBD
-                text_result.text = string.Format("Well done!");
+                textResult.text = string.Format("Well done!");
             }
             Done();
         }
-
-
     }
 
     // Collision Evenet
@@ -180,21 +221,19 @@ public class SpacecraftAgent : Agent
 
         failureCount++;
         AddReward(-1f);
-        if (text_result != null)
+        if (textResult != null)
         {
-            text_result.text = string.Format("Failed!");
+            textResult.text = string.Format("Failed!");
         }
         Done();
-        
-        
     }
 
     public override void AgentReset()
     {
-        spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));    
+        spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         //spaceStation.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
-        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
+        spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -3.4f) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
 
@@ -213,14 +252,16 @@ public class SpacecraftAgent : Agent
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
         rbSpacecraft.angularVelocity = new Vector3(0f, 0f, 0f);
 
-        if (text_result != null)
+        if (textResult != null)
         {
-            text_result.text = string.Format("Start!");
+            textResult.text = string.Format("Start!");
         }
 
         isMove = false;
+        attitudeControlStart = false;
         stepsCount = 0;
-        
+        oritentationReward = 0;
+        velocityReward = 0;
     }
 
     // Helper functions
@@ -247,7 +288,6 @@ public class SpacecraftAgent : Agent
     private void Orientation(Rigidbody t, float amount)
     {
         t.AddTorque(0, amount, 0);
-
     }
 
     // Reward functions
@@ -259,7 +299,6 @@ public class SpacecraftAgent : Agent
         if (r < previousR)
         {
             AddReward(rewardPosition);
-            positionReward = rewardPosition; // for tracing
         }
 
         if (isPunish)
@@ -267,31 +306,29 @@ public class SpacecraftAgent : Agent
             if (r > previousR)
             {
                 AddReward(-rewardPosition);
-                positionReward = -rewardPosition; // for tracing
             }
-        }             
+        }
     }
 
-    // Based on the tracing information (spacecraft.transform.rotation.y)
     // -1 < Orientation.y < 1. Documentation: https://docs.unity3d.com/ScriptReference/Quaternion-y.html
     private void OrientationReward(float orientationDiff, float rewardScale, bool isPunish)
     {
         // If diff = 0, reward, if diff = 1, punish ----> cosine function
         // If 1 Quaternion = 180 degree and pi radian = 180 degree  --> 1 Quaternion =  pi radian
-        float rewardOrientation = Mathf.Abs(Mathf.Cos(orientationDiff/ Mathf.PI)) * rewardScale; //TBD
+        float rewardOrientation = Mathf.Abs(Mathf.Cos(orientationDiff / Mathf.PI)) * rewardScale; //TBD
 
         if (orientationDiff < previousOrientationDiff)
         {
             AddReward(rewardOrientation);
         }
-        
-        if(isPunish)
+
+        if (isPunish)
         {
             if (orientationDiff > previousOrientationDiff)
             {
                 AddReward(-rewardOrientation);
             }
-        }           
+        }
     }
 
 
@@ -328,47 +365,4 @@ public class SpacecraftAgent : Agent
 
         return result;
     }
-
-
-    /*
-     * Check 1. position 2.angle 3.velocity 4.angular velocity
-     */
-    private bool IsDock(float distance, Quaternion spacecraftOrient, Quaternion targetOrient, Rigidbody rigidbodySpacecraft)
-    {
-        bool result = true;
-        bool isPositionValid = false;
-        bool isOrientationValid = false;
-        bool isVelocityValid = false;
-        bool isAngularVelocityValid = false;
-
-        float spacecraftVelocity = rigidbodySpacecraft.velocity.magnitude;
-        float spacecraftAngularVelocity =  rigidbodySpacecraft.angularVelocity.magnitude;
-
-
-        // 1. Distance is close enough
-        if (distance < positionTolerance)
-            isPositionValid = true;
-
-        // 2. Orientation is close enough
-        if (Mathf.Abs(spacecraftOrient.y - dockingPoint.transform.rotation.y) < orientTolerance)
-            isOrientationValid = true;
-
-        // 3. Spacecraft has very low velocity
-        if (spacecraftVelocity < velocityTorlerance)
-            isVelocityValid = true;
-
-        // 4. Spacecraft has very low angular velocity
-        if (spacecraftAngularVelocity < angularVelocityTolerence)
-            isAngularVelocityValid = true;
-
-        // Chain of tests
-        result &= isPositionValid; 
-        result &= isOrientationValid;
-        result &= isVelocityValid;
-        result &= isAngularVelocityValid;
-
-        return result;
-    }
-
-
 }
