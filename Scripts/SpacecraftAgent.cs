@@ -52,8 +52,10 @@ public class SpacecraftAgent : Agent
     private float oritentationReward = 0;
     private float velocityReward = 0;
 
+
     public override void InitializeAgent()
     {
+        FloatingTextController.Initialize();
         rbSpacecraft = spacecraft.GetComponent<Rigidbody>();
         if (rbSpacecraft == null)
         {
@@ -233,13 +235,13 @@ public class SpacecraftAgent : Agent
             {
                 perfectCount++;
                 AddReward(100f); //TBD
-                textResult.text = string.Format("Perfect docking!");
+                FloatingTextController.CreateFloatingText("Perfect docking!", transform);
             }
 
             else
             {
                 AddReward(floatingDockingPointReward); //TBD
-                textResult.text = string.Format("Well done!");
+                FloatingTextController.CreateFloatingText("Well done!", transform);
             }
             Done();
         }
@@ -252,10 +254,9 @@ public class SpacecraftAgent : Agent
 
         failureCount++;
         AddReward(-1f);
-        if (textResult != null)
-        {
-            textResult.text = string.Format("Failed!");
-        }
+
+        FloatingTextController.CreateFloatingText("Failed!", transform);
+        
         Done();
     }
 
