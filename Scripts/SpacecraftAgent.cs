@@ -9,8 +9,10 @@ public class SpacecraftAgent : Agent
     public GameObject spaceGargabe;
     public GameObject dockingPoint;
     public GameObject guidance1;
-    public GameObject guidance2;
-    public GameObject guidance3;
+    public GameObject guidance2_left;
+    public GameObject guidance2_right;
+    public GameObject guidance3_left;
+    public GameObject guidance3_right;
     public GameObject guidance_side;
 
     Rigidbody rbSpacecraft;
@@ -23,8 +25,8 @@ public class SpacecraftAgent : Agent
     private static float angularVelocityTolerence = 0.08f;
     private static float orientateSpeed = 5f; // rigid body
     private static int orientationAngle = 2; // non-rigid body
-    private static float movementSpeed = 5.0f; //Force
-    private static float maxVelocity = 10.0f;
+    private static float momentForce = 3.0f; //Force
+    private static float maxVelocity = 5.0f;
     private static float maxAngularVelocity = 3.0f;
 
     private bool isMove = false;
@@ -68,7 +70,7 @@ public class SpacecraftAgent : Agent
     {
         float rayDistance = 80f;
         float[] rayAngles = { 60f, 70f, 80f, 90f, 100f, 110f, 120f };
-        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall", "dockingPoint", "guidance", "guidance2" };
+        string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall", "dockingPoint", "guidance_1", "guidance_2", "guidance_3", "guidance_side" };
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
         SetTextObs("Testing " + gameObject.GetInstanceID());
@@ -98,13 +100,13 @@ public class SpacecraftAgent : Agent
             // Foward
             if (action == 0)
             {
-                ThrustForward(movementSpeed);
+                ThrustForward(momentForce);
                 ClampVelocity();
             }
             // Backward
             if (action == 1)
             {
-                ThrustForward(-movementSpeed);
+                ThrustForward(-momentForce);
                 ClampVelocity();
             }
             // Position y rotation
@@ -124,34 +126,34 @@ public class SpacecraftAgent : Agent
 
         }
 
-        /*
-         * Start to execute attitude control
-         */
-        if (attitudeControlStart)
-        {
-            //1. Control orientation
-            if(orientationDiff < 0.07) //TBD
-            {
-                AddReward(0.01f);
-                oritentationReward += 0.01f;
-            }
-            else
-            {
-                AddReward(-0.01f);
-                oritentationReward -= 0.01f;
-            }
+        ///*
+        // * Start to execute attitude control
+        // */
+        //if (attitudeControlStart)
+        //{
+        //    //1. Control orientation
+        //    if (orientationDiff < 0.07) //TBD
+        //    {
+        //        AddReward(0.001f);
+        //        oritentationReward = 0.001f;
+        //    }
+        //    else
+        //    {
+        //        AddReward(-0.001f);
+        //        oritentationReward = -0.001f;
+        //    }
 
-            if(velocity < 1.0f)
-            {
-                AddReward(0.01f);
-                velocityReward += 0.01f;
-            }
-            else
-            {
-                AddReward(-0.01f);
-                velocityReward -= 0.01f;
-            }
-        }
+        //    if (velocity < 1.0f)
+        //    {
+        //        AddReward(0.001f);
+        //        velocityReward = 0.001f;
+        //    }
+        //    else
+        //    {
+        //        AddReward(-0.001f);
+        //        velocityReward = -0.001f;
+        //    }
+        //}
 
         // Tracing
         if (text != null)
@@ -182,17 +184,46 @@ public class SpacecraftAgent : Agent
     {
         Debug.Log(gameObject.name + " was triggered by " + other.gameObject.name);
 
-        if (other.gameObject.CompareTag("guidance2"))
+
+        float floatingDockingPointReward = 0.5f;
+
+        if (other.gameObject.CompareTag("guidance_side"))
         {
             AddReward(0.01f);
             other.gameObject.SetActive(false);
+
         }
 
-        if (other.gameObject.CompareTag("guidance"))
+        if (other.gameObject.CompareTag("guidance_3"))
         {
             attitudeControlStart = true; // Start to perform altitude control
             AddReward(1f);
             other.gameObject.SetActive(false);
+            if (other.gameObject == guidance3_right)
+            {
+                guidance3_left.SetActive(false); // deactivate the other guidance3
+                guidance2_right.SetActive(true);
+            }
+            if (other.gameObject == guidance3_left)
+            {
+                guidance3_right.SetActive(false);
+                guidance2_left.SetActive(true);
+            }
+        }
+
+        if (other.gameObject.CompareTag("guidance_2"))
+        {
+            AddReward(2f);
+            other.gameObject.SetActive(false);
+            guidance1.SetActive(true);
+
+        }
+
+        if (other.gameObject.CompareTag("guidance_1"))
+        {
+            AddReward(3f);
+            other.gameObject.SetActive(false);
+            floatingDockingPointReward = 5f;
         }
 
         if (other.gameObject.CompareTag("dockingPoint"))
@@ -207,7 +238,7 @@ public class SpacecraftAgent : Agent
 
             else
             {
-                AddReward(5f); //TBD
+                AddReward(floatingDockingPointReward); //TBD
                 textResult.text = string.Format("Well done!");
             }
             Done();
@@ -233,20 +264,27 @@ public class SpacecraftAgent : Agent
         spacecraft.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         //spaceStation.transform.position = new Vector3(Random.Range(-initPosRange, initPosRange), 0f, Random.Range(-initPosRange, initPosRange));
         spaceStation.transform.position = new Vector3(0f, 0f, 0f);
-        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -12); // for test
+        //spacecraft.transform.position  = spaceStation.transform.position + new Vector3(0, 0, -20); // for test
         dockingPoint.transform.position = spaceStation.transform.position + new Vector3(0, 0, -3.4f); // (0, 0, -3.4f) is the offset from space staion
         dockingPoint.transform.rotation = spaceStation.transform.rotation;
 
         spaceStation.transform.rotation = new Quaternion(0f, 0f, 0f, 0f);
         dockingPoint.transform.rotation = new Quaternion(0f, 0f, 0f, 0f);
 
-        guidance1.SetActive(true);
-        guidance2.SetActive(true);
-        guidance3.SetActive(true);
+
+        guidance1.SetActive(false);
+        guidance2_left.SetActive(false);
+        guidance2_right.SetActive(false);
+        guidance3_left.SetActive(true);
+        guidance3_right.SetActive(true);
         guidance_side.SetActive(true);
-        guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -5f);
-        guidance2.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6.5f);
-        guidance3.transform.position = spaceStation.transform.position + new Vector3(0, 0, -8f);
+
+
+        guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6.6f);
+        guidance2_right.transform.position = spaceStation.transform.position + new Vector3(1.3f, 0, -9.3f);
+        guidance2_left.transform.position = spaceStation.transform.position + new Vector3(-1.3f, 0, -9.3f);
+        guidance3_right.transform.position = spaceStation.transform.position + new Vector3(3.7f, 0, -12f);
+        guidance3_left.transform.position = spaceStation.transform.position + new Vector3(-3.7f, 0, -12f);
         guidance_side.transform.position = spaceStation.transform.position + new Vector3(-10.0f, 0, 0f);
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
