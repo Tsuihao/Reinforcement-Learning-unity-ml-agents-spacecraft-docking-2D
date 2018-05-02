@@ -25,8 +25,8 @@ public class SpacecraftAgent : Agent
     private static float angularVelocityTolerence = 0.08f;
     private static float orientateSpeed = 5f; // rigid body
     private static int orientationAngle = 2; // non-rigid body
-    private static float momentForce = 1.5f; //Force
-    private static float maxVelocity = 3.0f;
+    private static float momentForce = 5f; //Force
+    private static float maxVelocity = 1.5f;
     private static float maxAngularVelocity = 3.0f;
 
     private bool isMove = false;
@@ -71,7 +71,7 @@ public class SpacecraftAgent : Agent
     public override void CollectObservations()
     {
         float rayDistance = 80f;
-        float[] rayAngles = { 60f, 70f, 80f, 90f, 100f, 110f, 120f };
+        float[] rayAngles = {20f ,40f ,60f, 70f, 80f, 90f, 100f, 110f, 120f, 140f, 160f, 180f, 200f, 220f, 240f, 260f, 280f, 300f, 320f, 340f, 360f };
         string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall", "dockingPoint", "guidance_1", "guidance_2", "guidance_3", "guidance_side" };
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
@@ -136,8 +136,8 @@ public class SpacecraftAgent : Agent
             //1. Control orientation
             if (orientationDiff < 0.07) //TBD
             {
-                AddReward(0.001f);
-                oritentationReward = 0.001f;
+                AddReward(0.01f);
+                oritentationReward = 0.01f;
             }
             //else
             //{
@@ -145,10 +145,11 @@ public class SpacecraftAgent : Agent
             //    oritentationReward = -0.001f;
             //}
 
-            if (velocity < 1.0f)
+            if (velocity < 2.0f)
             {
-                AddReward(0.001f);
-                velocityReward = 0.001f;
+                float reward = (2 - velocity) * 0.01f; // The slower the higher
+                AddReward(reward);
+                velocityReward = reward;
             }
             //else
             //{
@@ -187,8 +188,6 @@ public class SpacecraftAgent : Agent
         Debug.Log(gameObject.name + " was triggered by " + other.gameObject.name);
 
 
-        float floatingDockingPointReward = 0.5f;
-
         if (other.gameObject.CompareTag("guidance_side"))
         {
             AddReward(0.01f);
@@ -211,21 +210,19 @@ public class SpacecraftAgent : Agent
                 guidance3_right.SetActive(false);
                 guidance2_left.SetActive(true);
             }
+            guidance1.SetActive(true);
         }
 
         if (other.gameObject.CompareTag("guidance_2"))
         {
-            AddReward(2f);
+            AddReward(1f);
             other.gameObject.SetActive(false);
-            guidance1.SetActive(true);
-
         }
 
         if (other.gameObject.CompareTag("guidance_1"))
         {
-            AddReward(3f);
+            AddReward(1f);
             other.gameObject.SetActive(false);
-            floatingDockingPointReward = 5f;
         }
 
         if (other.gameObject.CompareTag("dockingPoint"))
@@ -240,7 +237,7 @@ public class SpacecraftAgent : Agent
 
             else
             {
-                AddReward(floatingDockingPointReward); //TBD
+                AddReward(1f); //TBD
                 FloatingTextController.CreateFloatingText("Well done!", transform);
             }
             Done();
@@ -281,11 +278,11 @@ public class SpacecraftAgent : Agent
         guidance_side.SetActive(true);
 
 
-        guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6.6f);
-        guidance2_right.transform.position = spaceStation.transform.position + new Vector3(1.3f, 0, -9.3f);
-        guidance2_left.transform.position = spaceStation.transform.position + new Vector3(-1.3f, 0, -9.3f);
-        guidance3_right.transform.position = spaceStation.transform.position + new Vector3(3.7f, 0, -12f);
-        guidance3_left.transform.position = spaceStation.transform.position + new Vector3(-3.7f, 0, -12f);
+        guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6f);
+        guidance2_right.transform.position = spaceStation.transform.position + new Vector3(1.3f, 0, -8f);
+        guidance2_left.transform.position = spaceStation.transform.position + new Vector3(-1.3f, 0, -8f);
+        guidance3_right.transform.position = spaceStation.transform.position + new Vector3(3f, 0, -10f);
+        guidance3_left.transform.position = spaceStation.transform.position + new Vector3(-3f, 0, -10f);
         guidance_side.transform.position = spaceStation.transform.position + new Vector3(-10.0f, 0, 0f);
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
