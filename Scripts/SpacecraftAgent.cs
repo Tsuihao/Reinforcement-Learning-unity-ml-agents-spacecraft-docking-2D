@@ -91,8 +91,9 @@ public class SpacecraftAgent : Agent
         float velocity = rbSpacecraft.velocity.magnitude;
 
         int action = (int)vectorAction[0];
-
-        AddReward(-1f / agentParameters.maxStep);
+        
+        if(!attitudeControlStart)
+            AddReward(-1f / agentParameters.maxStep);
 
         if (action != -1) // default action = -1 in Unity inspector
         {
@@ -147,7 +148,7 @@ public class SpacecraftAgent : Agent
 
             if (velocity < 2.0f)
             {
-                float reward = (2 - velocity) * 0.01f; // The slower the higher
+                float reward = (2 - velocity) * 0.001f; // The slower the higher
                 AddReward(reward);
                 velocityReward = reward;
             }
@@ -237,7 +238,7 @@ public class SpacecraftAgent : Agent
 
             else
             {
-                AddReward(1f); //TBD
+                AddReward(5f); //TBD
                 FloatingTextController.CreateFloatingText("Well done!", transform);
             }
             Done();
