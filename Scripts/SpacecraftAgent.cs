@@ -25,8 +25,8 @@ public class SpacecraftAgent : Agent
     private static float angularVelocityTolerence = 0.08f;
     private static float orientateSpeed = 5f; // rigid body
     private static int orientationAngle = 2; // non-rigid body
-    private static float momentForce = 3.0f; //Force
-    private static float maxVelocity = 5.0f;
+    private static float momentForce = 1.5f; //Force
+    private static float maxVelocity = 3.0f;
     private static float maxAngularVelocity = 3.0f;
 
     private bool isMove = false;
@@ -128,34 +128,34 @@ public class SpacecraftAgent : Agent
 
         }
 
-        ///*
-        // * Start to execute attitude control
-        // */
-        //if (attitudeControlStart)
-        //{
-        //    //1. Control orientation
-        //    if (orientationDiff < 0.07) //TBD
-        //    {
-        //        AddReward(0.001f);
-        //        oritentationReward = 0.001f;
-        //    }
-        //    else
-        //    {
-        //        AddReward(-0.001f);
-        //        oritentationReward = -0.001f;
-        //    }
+        /*
+         * Start to execute attitude control
+         */
+        if (attitudeControlStart)
+        {
+            //1. Control orientation
+            if (orientationDiff < 0.07) //TBD
+            {
+                AddReward(0.001f);
+                oritentationReward = 0.001f;
+            }
+            //else
+            //{
+            //    AddReward(-0.001f);
+            //    oritentationReward = -0.001f;
+            //}
 
-        //    if (velocity < 1.0f)
-        //    {
-        //        AddReward(0.001f);
-        //        velocityReward = 0.001f;
-        //    }
-        //    else
-        //    {
-        //        AddReward(-0.001f);
-        //        velocityReward = -0.001f;
-        //    }
-        //}
+            if (velocity < 1.0f)
+            {
+                AddReward(0.001f);
+                velocityReward = 0.001f;
+            }
+            //else
+            //{
+            //    AddReward(-0.001f);
+            //    velocityReward = -0.001f;
+            //}
+        }
 
         // Tracing
         if (text != null)
