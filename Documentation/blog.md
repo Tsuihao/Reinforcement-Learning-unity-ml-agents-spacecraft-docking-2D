@@ -22,7 +22,40 @@ The goals / steps of this project are the following:
 
 
 ---
+## Spacecraft_New_0
+A huge modification is done during the refactoring of the whole structure.
+**The previous designs are all changed** (referring to Spacecraft_0, Spacecraft_1 and Spacecraft_2 at below). While viewing the other ml-agent provided examples, we realized that the **_conventional_** reward functions we provided before is not fully utilize the power of reinforment learning. In addition, the **rayPerception** class offers the visual ability for agents which directly helps us to eliminate the previous position reward function (the closer to the docking point, the higher). Here we will list some points are improtant for us.
 
+**[Lesson learned]**
+* Time pressure reward function helps agents to finish the task faster AddReward(-1/agent.maxstep)
+
+* Ray perception provides the visibility of agent (combining with angle of view and range of view)
+
+* The training result can be transferable e.g if the agent is trained with the fixed docking point, it will still know to find the floating docking points (but this need to be combined with **rayPerception**)
+
+
+**Date:** 5/3<br>
+**Reward function:** 
+
+Time pressure reward, guidance reward, attitude control reward, perfect docking (additional reward)<br>
+
+**Observation:** 
+* When initialization position of spacecraft is at the upper part of the docking point still has problem 
+
+* Perfect docking is not efficient (due to attitude control reward fucntion is not efficient)<br>
+
+**Improved points:**
+* Success rate increase
+* Visualization of the gaming improved <br>
+ 
+**Need improvements:**
+* The performance of attitude reward fucntion is still not good. The velocity during dockingn is still too fast and the angle during docking is not correct.<br>
+
+**Training image:** <br>
+
+
+---
+## [Legacy]
 ### Spacecraft_0
 
 
@@ -43,6 +76,9 @@ The goals / steps of this project are the following:
 ![alt text][spacecraft_0]
 
 ---
+
+
+
 ### Spacecraft_1
 
 **Date:** 4/27 <br>
@@ -92,14 +128,3 @@ The goals / steps of this project are the following:
 <br>
 
  --- 
- ## Spacecraft_3
- 
- **Date:** 4/27<br>
-**Reward function:** same as previous <br>
-**Observation:** 
-* Sometimes know the target position to approach, but do not know when to "break"
-* <br>
-
-**Improved points:**<br> 
-**Need improvements:**<br>
-**Training image:** <br>
