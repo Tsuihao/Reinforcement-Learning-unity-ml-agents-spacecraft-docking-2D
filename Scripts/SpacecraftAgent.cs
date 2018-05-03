@@ -208,7 +208,7 @@ public class SpacecraftAgent : Agent
             attitudeControlStart = true; // Start to perform altitude control
             maxVelocity = 0.6f; // lock the speed
             orientationAngle = 1; // lock the orientation
-            AddReward(1f);
+            AddReward(8f);
             other.gameObject.SetActive(false);
             if (other.gameObject == guidance3_right)
             {
@@ -225,13 +225,13 @@ public class SpacecraftAgent : Agent
 
         if (other.gameObject.CompareTag("guidance_2"))
         {
-            AddReward(1f);
+            AddReward(8f);
             other.gameObject.SetActive(false);
         }
 
         if (other.gameObject.CompareTag("guidance_1"))
         {
-            AddReward(1f);
+            AddReward(8f);
             other.gameObject.SetActive(false);
             dockingPoint.SetActive(true);
         }
@@ -261,7 +261,7 @@ public class SpacecraftAgent : Agent
         Debug.Log(gameObject.name + " was collided by " + col.gameObject.name);
 
         failureCount++;
-        AddReward(-1f);
+        AddReward(-50f);
 
         FloatingTextController.CreateFloatingText("Failed!", transform);
         
