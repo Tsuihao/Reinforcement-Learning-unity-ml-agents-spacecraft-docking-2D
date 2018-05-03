@@ -135,25 +135,30 @@ public class SpacecraftAgent : Agent
         if (attitudeControlStart)
         {
             //1. Control orientation
-            if (orientationDiff < 0.07) //TBD
+            if (orientationDiff < 0.3) //TBD
             {
-                float reward = (0.07f - orientationDiff) * 0.1f; 
+                float scale = 0.001f;
+                if(orientationDiff < 0.07)
+                {
+                    scale = 0.01f;
+                }
+                float reward = (0.3f - orientationDiff) * scale; 
                 AddReward(reward);
                 oritentationReward = reward;
             }
             else
             {
-                float reward = (0.07f - orientationDiff) * 0.05f;
+                float reward = (0.3f - orientationDiff) * 0.005f;
                 AddReward(reward);
                 oritentationReward = reward;
             }
 
-            if (velocity < 1.0f)
-            {
-                float reward = (2 - velocity) * 0.005f; // The slower the higher
-                AddReward(reward);
-                velocityReward = reward;
-            }
+            //if (velocity < 1.0f)
+            //{
+            //    float reward = (2 - velocity) * 0.005f; // The slower the higher
+            //    AddReward(reward);
+            //    velocityReward = reward;
+            //}
             //else
             //{
             //    AddReward(-0.001f);
