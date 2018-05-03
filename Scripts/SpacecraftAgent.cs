@@ -71,7 +71,7 @@ public class SpacecraftAgent : Agent
     public override void CollectObservations()
     {
         float rayDistance = 80f;
-        float[] rayAngles = {60f, 70f, 80f, 90f, 100f, 110f, 120f};
+        float[] rayAngles = {80f, 83f, 86f, 90f, 93f, 96f,100f};
         string[] detectableObjects = { "spaceStation", "spaceGarbage", "wall", "dockingPoint", "guidance_1", "guidance_2", "guidance_3", "guidance_side" };
         AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f)); // 48!?
         AddVectorObs((float)GetStepCount() / (float)agentParameters.maxStep);//1
@@ -137,18 +137,20 @@ public class SpacecraftAgent : Agent
             //1. Control orientation
             if (orientationDiff < 0.07) //TBD
             {
-                AddReward(0.01f);
-                oritentationReward = 0.01f;
+                float reward = (0.07f - orientationDiff) * 0.1f; 
+                AddReward(reward);
+                oritentationReward = reward;
             }
-            //else
-            //{
-            //    AddReward(-0.001f);
-            //    oritentationReward = -0.001f;
-            //}
-
-            if (velocity < 2.0f)
+            else
             {
-                float reward = (2 - velocity) * 0.001f; // The slower the higher
+                float reward = (0.07f - orientationDiff) * 0.05f;
+                AddReward(reward);
+                oritentationReward = reward;
+            }
+
+            if (velocity < 1.0f)
+            {
+                float reward = (2 - velocity) * 0.005f; // The slower the higher
                 AddReward(reward);
                 velocityReward = reward;
             }
@@ -199,6 +201,8 @@ public class SpacecraftAgent : Agent
         if (other.gameObject.CompareTag("guidance_3"))
         {
             attitudeControlStart = true; // Start to perform altitude control
+            maxVelocity = 0.6f; // lock the speed
+            orientationAngle = 1; // lock the orientation
             AddReward(1f);
             other.gameObject.SetActive(false);
             if (other.gameObject == guidance3_right)
@@ -224,6 +228,7 @@ public class SpacecraftAgent : Agent
         {
             AddReward(1f);
             other.gameObject.SetActive(false);
+            dockingPoint.SetActive(true);
         }
 
         if (other.gameObject.CompareTag("dockingPoint"))
@@ -276,14 +281,15 @@ public class SpacecraftAgent : Agent
         guidance2_right.SetActive(false);
         guidance3_left.SetActive(true);
         guidance3_right.SetActive(true);
-        guidance_side.SetActive(true);
+        guidance_side.SetActive(false);
+        dockingPoint.SetActive(false);
 
 
-        guidance1.transform.position = spaceStation.transform.position + new Vector3(0, 0, -6f);
-        guidance2_right.transform.position = spaceStation.transform.position + new Vector3(1.3f, 0, -8f);
-        guidance2_left.transform.position = spaceStation.transform.position + new Vector3(-1.3f, 0, -8f);
-        guidance3_right.transform.position = spaceStation.transform.position + new Vector3(3f, 0, -10f);
-        guidance3_left.transform.position = spaceStation.transform.position + new Vector3(-3f, 0, -10f);
+        guidance1.transform.position = spaceStation.transform.position + new Vector3(0f, 0, -5.8f);
+        guidance2_right.transform.position = spaceStation.transform.position + new Vector3(0.9f, 0, -7.8f);
+        guidance2_left.transform.position = spaceStation.transform.position + new Vector3(-0.9f, 0, -7.8f);
+        guidance3_right.transform.position = spaceStation.transform.position + new Vector3(2.1f, 0, -9.8f);
+        guidance3_left.transform.position = spaceStation.transform.position + new Vector3(-2.1f, 0, -9.8f);
         guidance_side.transform.position = spaceStation.transform.position + new Vector3(-10.0f, 0, 0f);
 
         rbSpacecraft.velocity = new Vector3(0f, 0f, 0f);
@@ -296,6 +302,8 @@ public class SpacecraftAgent : Agent
 
         isMove = false;
         attitudeControlStart = false;
+        maxVelocity = 1.5f; // un-lock the speed
+        orientationAngle = 2; // un-lock the orientation
         stepsCount = 0;
         oritentationReward = 0;
         velocityReward = 0;
