@@ -10,8 +10,9 @@ The goals / steps of this project are the following:
 
 [spacecraft_0]: ./Tensorboard/Spacecraft_0/spacecraft_0.png 
 [spacecraft_1]: ./Tensorboard/Spacecraft_1/spacecraft_1.JPG 
-[spacecraft_2]: ./Tensorboard/Spacecraft_2/spacecraft_2.JPG 
-
+[spacecraft_2]: ./Tensorboard/Spacecraft_2/spacecraft_2.JPG
+[spacecraft_New_1_6M]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_6M.JPG
+[spacecraft_New_1_10M]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_10M.JPG
 ## Template
 **Date:**<br>
 **Reward function:**<br>
@@ -22,7 +23,7 @@ The goals / steps of this project are the following:
 
 
 ---
-## Spacecraft_New
+## Spacecraft_New_0
 A huge modification is done during the refactoring of the whole structure.
 **The previous designs are all changed** (referring to Spacecraft_0, Spacecraft_1 and Spacecraft_2 at below). While viewing the other ml-agent provided examples, we realized that the **_conventional_** reward functions we provided before is not fully utilize the power of reinforment learning. In addition, the **rayPerception** class offers the visual ability for agents which directly helps us to eliminate the previous position reward function (the closer to the docking point, the higher). Here we will list some points are improtant for us.
 
@@ -49,10 +50,46 @@ Time pressure reward, guidance reward, attitude control reward, perfect docking 
 * Visualization of the gaming improved <br>
  
 **Need improvements:**
-* The performance of attitude reward fucntion is still not good. The velocity during dockingn is still too fast.<br>
+* The performance of attitude reward fucntion is still not good. The velocity during dockingn is still too fast and the angle during docking is not correct.<br>
 
 **Training image:** <br>
 
+
+---
+### Spacecraft_New_1
+
+This time we trained with identical setting but on two different host computers.
+In addition, one is set to train with 6 million steps and another one is set to train with 10 million steps. The images can be seen at the **Training image**. As you can seen in the two figures. the average performance of 6M steps is better than the 10M steps. This brings the doubts that the _RL training might not converges to the same performance point_ even with the identical settings. Both trained models are attached  in Documentation/Trained_models/Spacecraft_New_01. **New_01_6M.bytes is recommended to use.**
+
+**Date:** 5/4 <br>
+**Reward function:** 
+
+[Same as previous] Time pressure, attitude control, guidance reward, perfect docking (adiitional reward)<br>
+
+**Observation:**
+* Perfect docking acount increases (locking mechnisam works)
+* However the 360-degree orientation (at x-z plane) account increases (due to narrow the ray perception range)<br>
+
+**Improved points:**
+* Locking mechnisam: lock the maximum velocity and orientation speed after trigger with first guidance. By doing this the perfect docking rate is around 10%-11%.
+
+* Adjust the position and the size of guidances and docking point to increase the possibility of perfect docking.<br> 
+
+* Narrowing the range of ray perception let the spacecraft targeting at the docking point perpendicularly. However, by doing this increases the 360-orientation searching. 
+
+**Need improvements:**<br>
+
+* Increase the perfect docking rate
+* Reduce the 360-orientation
+
+**Training image:** <br>
+
+6M steps:
+![alt text][spacecraft_New_1_6M]
+
+
+10M steps:
+![alt text][spacecraft_New_1_10M]
 
 ---
 ## [Legacy]
