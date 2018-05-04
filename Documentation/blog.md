@@ -12,7 +12,9 @@ The goals / steps of this project are the following:
 [spacecraft_1]: ./Tensorboard/Spacecraft_1/spacecraft_1.JPG 
 [spacecraft_2]: ./Tensorboard/Spacecraft_2/spacecraft_2.JPG
 [spacecraft_New_1_6M]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_6M.JPG
+[spacecraft_New_1_6M_smooth]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_6M_smooth.JPG
 [spacecraft_New_1_10M]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_10M.JPG
+[spacecraft_New_1_10M_smooth]: ./Tensorboard/Spacecraft_New_01/Spacecraft_New_1_10M_smooth.JPG
 ## Template
 **Date:**<br>
 **Reward function:**<br>
@@ -59,7 +61,7 @@ Time pressure reward, guidance reward, attitude control reward, perfect docking 
 ### Spacecraft_New_1
 
 This time we trained with identical setting but on two different host computers.
-In addition, one is set to train with 6 million steps and another one is set to train with 10 million steps. The images can be seen at the **Training image**. As you can seen in the two figures. the average performance of 6M steps is better than the 10M steps. This brings the doubts that the _RL training might not converges to the same performance point_ even with the identical settings. Both trained models are attached  in Documentation/Trained_models/Spacecraft_New_01. **New_01_6M.bytes is recommended to use.**
+In addition, one is set to train with 6 million steps and another one is set to train with 10 million steps. The images can be seen at the **Training image**. As you can seen in the figures (smooth version is better for visualization), the average performance of both models are conveging to the similar point. Both trained models are attached in Documentation/Trained_models/Spacecraft_New_01. And the tensorboard events are attached to Documentation/Tensorboard/Spacecraft_New_01.
 
 **Date:** 5/4 <br>
 **Reward function:** 
@@ -86,11 +88,14 @@ In addition, one is set to train with 6 million steps and another one is set to 
 
 6M steps:
 ![alt text][spacecraft_New_1_6M]
+Smooth value:0.995
+![alt text][spacecraft_New_1_6M_smooth]
 
 
 10M steps:
 ![alt text][spacecraft_New_1_10M]
-
+Smooth value:0.995
+![alt text][spacecraft_New_1_10M_smooth]
 ---
 ## [Legacy]
 ### Spacecraft_0
