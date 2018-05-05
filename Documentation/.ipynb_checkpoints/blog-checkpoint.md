@@ -96,6 +96,7 @@ Smooth value:0.995
 ![alt text][spacecraft_New_1_10M]
 Smooth value:0.995
 ![alt text][spacecraft_New_1_10M_smooth]
+
 ---
 ## [Legacy]
 ### Spacecraft_0
