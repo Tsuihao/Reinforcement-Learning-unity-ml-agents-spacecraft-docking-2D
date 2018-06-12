@@ -14,6 +14,9 @@ public class SpacecraftAgent : Agent
     public GameObject guidance3_left;
     public GameObject guidance3_right;
     public GameObject guidance_side;
+    public GameObject guidance_side_1;
+    public GameObject guidance_side_2;
+    public GameObject guidance_side_3;
 
     Rigidbody rbSpacecraft;
     RayPerception rayPer;
@@ -287,6 +290,9 @@ public class SpacecraftAgent : Agent
         guidance3_left.SetActive(true);
         guidance3_right.SetActive(true);
         guidance_side.SetActive(true);
+        guidance_side_1.SetActive(true);
+        guidance_side_2.SetActive(true);
+        guidance_side_3.SetActive(true);
         dockingPoint.SetActive(false);
 
 
