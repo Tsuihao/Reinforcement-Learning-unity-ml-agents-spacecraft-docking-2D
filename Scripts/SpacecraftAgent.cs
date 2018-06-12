@@ -31,7 +31,7 @@ public class SpacecraftAgent : Agent
 
     private bool isMove = false;
     private bool attitudeControlStart = false;
-    private static float initPosRange = 30f;
+    private static float initPosRange = 50f;
     private static float rLimit = Mathf.Sqrt(Mathf.Pow(2 * initPosRange, 2)); // (2*initPosRange* root(2))^2 -> the possible largest initialization distance
 
     private float previousR = rLimit; // maximum value
@@ -198,7 +198,7 @@ public class SpacecraftAgent : Agent
 
         if (other.gameObject.CompareTag("guidance_side"))
         {
-            AddReward(0.01f);
+            AddReward(0.1f);
             other.gameObject.SetActive(false);
 
         }
@@ -286,7 +286,7 @@ public class SpacecraftAgent : Agent
         guidance2_right.SetActive(false);
         guidance3_left.SetActive(true);
         guidance3_right.SetActive(true);
-        guidance_side.SetActive(false);
+        guidance_side.SetActive(true);
         dockingPoint.SetActive(false);
 
 
