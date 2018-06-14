@@ -201,7 +201,7 @@ public class SpacecraftAgent : Agent
 
         if (other.gameObject.CompareTag("guidance_side"))
         {
-            AddReward(0.1f);
+            AddReward(5f);
             other.gameObject.SetActive(false);
 
         }
@@ -251,7 +251,7 @@ public class SpacecraftAgent : Agent
 
             else
             {
-                AddReward(5f); //TBD
+                AddReward(10f); //TBD
                 FloatingTextController.CreateFloatingText("Well done!", transform);
             }
             Done();
