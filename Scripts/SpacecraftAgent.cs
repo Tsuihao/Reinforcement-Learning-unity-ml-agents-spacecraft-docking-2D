@@ -6,7 +6,7 @@ public class SpacecraftAgent : Agent
 {
     public GameObject spaceStation;
     public GameObject spacecraft;
-    public GameObject spaceGargabe;
+    public GameObject spaceDebris;
     public GameObject dockingPoint;
     public GameObject guidance1;
     public GameObject guidance2_left;
@@ -202,8 +202,11 @@ public class SpacecraftAgent : Agent
         if (other.gameObject.CompareTag("guidance_side"))
         {
             AddReward(5f);
-            other.gameObject.SetActive(false);
-
+            // Deactivate all the side guidance once any of them is reached.
+            guidance_side.gameObject.SetActive(false);
+            guidance_side_1.SetActive(false);
+            guidance_side_2.SetActive(false);
+            guidance_side_3.SetActive(false);
         }
 
         if (other.gameObject.CompareTag("guidance_3"))
